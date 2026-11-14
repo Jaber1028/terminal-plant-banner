@@ -5,6 +5,22 @@ tab (background, text, cursor) to match it. Built for Windows Terminal + PowerSh
 
 The art is drawn with truecolor half-block characters, so one character cell holds two pixels.
 
+## Gallery
+
+The five plants drawn from shapes by `make_big.py`, as they show in the terminal:
+
+![Peashooter, repeater, wall-nut, potato mine and mushroom](docs/drawn-plants.png)
+
+`plants garden`, the small row at double size:
+
+![Sunflower, peashooter, snow pea, wall-nut and cherries in a row](docs/garden.png)
+
+`plants classic`, the first version:
+
+![The original small row of plants](docs/classic.png)
+
+The images are rendered straight from the banner files with `render_ans.py`.
+
 ## What's included
 
 - Five original plants, drawn from shapes by `make_big.py`, ready to use in `out/`.
@@ -67,6 +83,16 @@ Useful options for `from_image.py`:
 | `--png` | also write `check-<name>.png` to inspect the result |
 
 `build_all.sh` shows the options used for a larger personal set and rebuilds everything at once.
+
+## Credits
+
+The pixel art used as reference for the personal set (converted with `from_image.py`, not
+included here) is by [TomcArts01](https://tomcarts01.newgrounds.com/):
+[PvZ All Plants Pixel Art](https://www.newgrounds.com/art/view/tomcarts01/pvz-all-plants-pixel-art)
+on Newgrounds. Go look at the original.
+
+The plants are characters from *Plants vs. Zombies* by PopCap Games / Electronic Arts. This is
+an unofficial fan project with no connection to them.
 
 ## Notes
 
