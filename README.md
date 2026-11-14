@@ -3,7 +3,7 @@
 ![A tangle kelp in pixel art, drawn in a terminal tinted to match it](docs/hero.png)
 
 Shows a big, coloured pixel-art plant when a terminal opens, and tints the terminal (background,
-text, cursor) to match it. There is a PowerShell version and a bash version, so it runs on
+text, cursor) to match it. There is a PowerShell version and a bash/zsh version, so it runs on
 Windows, Linux and macOS, locally or over ssh.
 
 The art is drawn with truecolor half-block characters, so one character cell holds two pixels.
@@ -40,7 +40,7 @@ add your own from any pixel art.
 Both versions need Python 3 once, to build the banners. Pillow (`pip install pillow`) is
 optional: without it plants are never drawn smaller than their real size.
 
-## Install: bash on Linux, macOS or any Unix-like system
+## Install: bash or zsh on Linux, macOS or any Unix-like system
 
 ```bash
 git clone <this repository's URL> pvz-banner
@@ -49,19 +49,33 @@ bash install.sh
 ```
 
 `install.sh` runs `build.py` (every size, a colour theme per banner, and the bash bundle in
-`bash/build/`), then installs it for you: the art goes to `~/.local/share/pvz-banner/` and one
-marked block goes into `~/.bashrc`, and into `~/.bash_profile` too where login shells don't read
-`~/.bashrc` (as on macOS). Running it again updates both. To uninstall, delete the block (from
-`# pvz-banner start` to `# pvz-banner end`) and that folder.
+`bash/build/`), then installs it for you. The art goes to `~/.local/share/pvz-banner/`, and one
+marked block goes into each shell file that needs it:
+
+- `~/.bashrc`, and `~/.bash_profile` too where login shells don't read `~/.bashrc`;
+- `~/.zshrc`, when zsh is your shell or you have a `~/.zshrc` (macOS's default). zsh gets the
+  same `plants` command, run through bash behind the scenes.
+
+Running it again updates everything in place. To uninstall, delete each block (from
+`# pvz-banner start` to `# pvz-banner end`) and that folder; each file you had is backed up first
+as `<file>.bak-pvz`.
 
 A plant shows once per terminal session: in a new local terminal, or when you ssh in. It only
 draws in an interactive shell on a real terminal at least 60 columns wide, so `ssh host command`,
 scp, rsync and cron never see it, and shells started inside the session don't repeat it. The
 terminal's colours are put back when the session ends.
 
-Needs bash 4.2+ (macOS ships 3.2: `brew install bash` and make it your shell), `tput` and `paste`.
-`shuf` is used when there; without it a random sort in `awk` does the same job. To install on a
-machine without Python, build on another one and copy `bash/build/` over, then run its
+Needs bash 4.2 or newer somewhere on the system (it doesn't have to be your login shell), plus
+`tput` and `paste`. The installer looks on your PATH and in the usual Homebrew and MacPorts
+places. `shuf` is used when there; without it a random sort in `awk` does the same job. Works with
+GNU, BSD and BusyBox tools.
+
+**macOS:** the built-in bash is 3.2, so run `brew install bash` first; your login shell (zsh) can
+stay as it is. For the smaller sizes, install Pillow into the same `python3` the build uses:
+`python3 -m pip install --user pillow` (add `--break-system-packages` if pip asks for it; a
+Homebrew Pillow may belong to a different Python), then run `bash install.sh` again.
+
+To install on a machine without Python, build on another one, copy `bash/build/` over and run its
 `install.sh`. `bash test.sh` in the installed folder checks every view fits several window sizes.
 
 ## Install: PowerShell 7+ on any OS
