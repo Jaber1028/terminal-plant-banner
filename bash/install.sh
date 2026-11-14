@@ -118,3 +118,8 @@ fi
 strip_old "$HOME/.bash_logout"   # older versions added a line there; the trap above does its job now
 [[ -f $HOME/.bash_logout && ! -s $HOME/.bash_logout ]] && rm -f "$HOME/.bash_logout"
 echo "installed in $dest; $(wc -l < "$dest/index.tsv") banners; using $new_bash"
+if [[ ${TERM_PROGRAM:-} == Apple_Terminal ]]; then
+    echo "note: Terminal.app draws thin lines through the art at its default line spacing. To close"
+    echo "  them: Terminal > Settings > Profiles > (your profile) > Text, and lower the line spacing"
+    echo "  (about 0.805 with Menlo). iTerm2 and most other terminals need no change."
+fi

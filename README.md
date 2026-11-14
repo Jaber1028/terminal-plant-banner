@@ -77,6 +77,13 @@ the build uses: `python3 -m pip install --user --break-system-packages pillow`. 
 pillow` can land in a different Homebrew Python than the `python3` on your PATH, and then the
 build doesn't see it; `python3 -c "import PIL"` tells you whether it can.
 
+**macOS Terminal.app shows thin horizontal lines through the art:** it draws the half-block
+characters with the font, and with the default spacing they don't fill the whole line. iTerm2,
+Ghostty, Windows Terminal and most others draw these blocks themselves and show no gaps. In
+Terminal.app, open Terminal > Settings > Profiles, pick your profile, open the Text tab, and lower
+the line spacing until the lines close up; with Menlo, a line spacing of about 0.805 and a
+character spacing of 1 is a known good setting. Other fonts may need a different value.
+
 To install on a machine without Python, build on another one, copy `bash/build/` over and run its
 `install.sh`. `bash test.sh` in the installed folder checks every view fits several window sizes.
 
