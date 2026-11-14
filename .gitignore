@@ -2,10 +2,6 @@
 refs/
 out/*
 # The plants drawn by make_big.py are original and are included ready-made.
-!out/big-peashooter.*
-!out/big-wallnut.*
-!out/big-repeater.*
-!out/big-potatomine.*
 !out/big-mushroom.*
 !out/garden-*.ans
 !out/garden-*.theme
@@ -14,13 +10,5 @@ __pycache__/
 preview.png
 check-*.png
 sheet.png
-!out/small*-peashooter.*
-!out/small*-wallnut.*
-!out/small*-repeater.*
-!out/small*-potatomine.*
 !out/small*-mushroom.*
-!out/x?-peashooter.*
-!out/x?-wallnut.*
-!out/x?-repeater.*
-!out/x?-potatomine.*
 !out/x?-mushroom.*

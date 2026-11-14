@@ -231,7 +231,8 @@ def main():
     # never swallows a rare but distinct colour (the two white pixels of an eye).
     merge, chosen, home = arg("--merge", 26), [], {}
     for colour, _ in Counter(flat).most_common():
-        home[colour] = next((k for k in chosen if not far(colour, k, merge)), None)
+        near = [k for k in chosen if not far(colour, k, merge)]
+        home[colour] = min(near, key=lambda k: sum(abs(a - b) for a, b in zip(colour, k))) if near else None
         if home[colour] is None:
             chosen.append(colour)
             home[colour] = colour
@@ -273,6 +274,16 @@ def main():
                        for dy in (-2, -1, 0, 1, 2) for dx in (-2, -1, 0, 1, 2))
 
         cells = [[(floor, floor + 4, floor + 14) if c and max(c) < floor and near_open(y, x) else c
+                  for x, c in enumerate(line)] for y, line in enumerate(cells)]
+    # --halo: a one-pixel dark-slate ring just outside the silhouette. The art (and its black
+    # outline) stays exactly as drawn, and the shape still reads on a near-black terminal.
+    if "--halo" in sys.argv:
+        ring = (52, 55, 64)
+        cells = [[None] * (cols + 2)] + [[None] + line + [None] for line in cells] + [[None] * (cols + 2)]
+        rows, cols = rows + 2, cols + 2
+        cells = [[ring if c is None and any(
+                      0 <= y + dy < rows and 0 <= x + dx < cols and cells[y + dy][x + dx] not in (None, ring)
+                      for dy in (-1, 0, 1) for dx in (-1, 0, 1)) else c
                   for x, c in enumerate(line)] for y, line in enumerate(cells)]
     if rows % 2:
         cells.insert(0, [None] * cols)

@@ -7,17 +7,18 @@ The art is drawn with truecolor half-block characters, so one character cell hol
 
 ## Gallery
 
-All 31 plants in the rotation, as they show in the terminal (one is picked at random each time):
+All 50 plants in the rotation, as they show in the terminal (one is picked at random each time):
 
-![All 31 plants in the rotation](docs/plants.png)
+![All 50 plants in the rotation](docs/plants.png)
 
-Most are converted from [TomcArts01's pixel art](https://www.newgrounds.com/art/view/tomcarts01/pvz-all-plants-pixel-art)
-(see Credits); the peashooter, repeater, wall-nut, potato mine and purple mushroom are drawn by
-`make_big.py`. The image is rendered straight from the banner files with `render_ans.py`.
+All but one are converted from [TomcArts01's pixel art](https://www.newgrounds.com/art/view/tomcarts01/pvz-all-plants-pixel-art)
+(see Credits); the purple mushroom is drawn by `make_big.py`. The image is rendered straight
+from the banner files with `render_ans.py`.
 
 ## What's included
 
-- Five original plants, drawn from shapes by `make_big.py`, ready to use in `out/`.
+- Original plants drawn from shapes by `make_big.py` (run it to create them in `out/`; the
+  purple mushroom is included ready-made).
 - `from_image.py`, which turns any pixel-art picture into a banner, so you can add your own.
 - `make_themes.py`, which works out a matching tab colour theme for every banner.
 - `profile-snippet.ps1`, the PowerShell profile code that shows a banner on start-up.
@@ -72,7 +73,10 @@ Useful options for `from_image.py`:
 | `--reach 1` | average a 3x3 patch per pixel; better for small or blurry pictures |
 | `--main` | keep only the biggest sprite (drops neighbours at the picture's edge) |
 | `--drop R,G,B` | remove a colour, such as a ground shadow |
-| `--lift-dark 62` | raise the black outer outline to slate so it shows on a dark terminal |
+| `--snap` | follow the picture's real pixel edges; fixes blur when art pixels are 3 or 4 picture pixels apart |
+| `--halo` | add a one-pixel slate ring outside the outline so black outlines show on a dark terminal |
+| `--merge N` | fold colours closer than N together (default 26); removes screenshot speckle |
+| `--lift-dark 62` | instead of a halo, turn the black outer outline itself to slate |
 | `--crop l,t,r,b` | use only part of the picture |
 | `--png` | also write `check-<name>.png` to inspect the result |
 

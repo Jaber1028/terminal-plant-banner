@@ -40,7 +40,7 @@ for path in sorted(glob.glob(os.path.join(here, "out", "*.ans"))):
         strength = min(1.0, s * 1.3)
     else:                                    # a colourless plant gets a neutral slate
         h, strength = 0.62, 0.25
-    theme = (osc(11, tint(h, 0.45 * strength, 0.21))      # background: light enough that black outlines show
+    theme = (osc(11, tint(h, 0.55 * strength, 0.11))      # background
              + osc(10, tint(h, 0.14 * strength, 0.90))    # text
              + osc(12, tint(h, 0.80 * strength, 0.95)))   # cursor
     with open(path[:-4] + ".theme", "w", encoding="utf-8", newline="") as f:
