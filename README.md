@@ -45,7 +45,7 @@ Bring your own pictures.
 
 | Command | Shows |
 |---|---|
-| `plants` | one plant at random, at normal size (or a smaller copy if the window is too small) |
+| `plants` | one plant at random, as big as the window allows (3x, 2x, normal or smaller) |
 | `plants <name>` | a specific plant |
 | `plants list` | the names available |
 | `plants garden` | five random plants side by side, at the biggest size that fits the window |

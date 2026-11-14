@@ -12,10 +12,11 @@ function plants {
     $dir = "$HOME\.config\pvz-banner"
     $width = if ($Columns) { $Columns } else { $Host.UI.RawUI.WindowSize.Width }
     $height = if ($Rows) { $Rows } else { $Host.UI.RawUI.WindowSize.Height }
-    # One plant is drawn at its normal size, or a smaller copy when the window is too small for it.
+    # One plant on its own is drawn as big as the window allows (3x, 2x, normal, then smaller copies);
+    # the garden stops at normal size, so a single plant is always the bigger one.
     $sized = {
         param($name)
-        foreach ($kind in 'big', 'small60', 'small50', 'small40', 'small30', 'small20') {
+        foreach ($kind in 'x3', 'x2', 'big', 'small60', 'small50', 'small40', 'small30', 'small20') {
             $f = "$dir\out\$kind-$name.ans"
             if (-not (Test-Path $f)) { continue }
             $lines = [IO.File]::ReadAllLines($f)
