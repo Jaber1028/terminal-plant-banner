@@ -131,7 +131,12 @@ plants() {
     # column is never used: writing into it makes the terminal wrap and splits every row.
     width=$(( cols - 1 )) room=$(( rows - 2 ))
     case $which in
-        list)   _plants_names | paste -sd ' ' | sed 's/ /, /g'; return ;;
+        list)   # joined in bash itself: BSD and GNU paste/sed disagree on reading stdin
+            local names joined
+            mapfile -t names < <(_plants_names)
+            printf -v joined '%s, ' "${names[@]}"
+            printf '%s\n' "${joined%, }"
+            return ;;
         reset)  printf '\033]110\033\\\033]111\033\\\033]112\033\\'; return ;;
         garden) _plants_garden "$count" "$width" "$room"; return ;;
         random)   # a random plant among those that fit this window at some size; none fit, nothing shown
