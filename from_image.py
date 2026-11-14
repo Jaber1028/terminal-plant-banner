@@ -59,6 +59,40 @@ def background_mask(img, tol):
     return mask
 
 
+def edge_profiles(img, box):
+    """Colour-change strength between each picture column (and row) and the one before it."""
+    x0, y0, x1, y1 = box
+    px = img.load()
+    cols = [0.0] * (x1 - x0 + 1)
+    rows = [0.0] * (y1 - y0 + 1)
+    for y in range(y0, y1):
+        for x in range(x0 + 1, x1):
+            cols[x - x0] += sum(abs(px[x, y][i] - px[x - 1, y][i]) for i in range(3))
+    for x in range(x0, x1):
+        for y in range(y0 + 1, y1):
+            rows[y - y0] += sum(abs(px[x, y][i] - px[x, y - 1][i]) for i in range(3))
+    return cols, rows
+
+
+def boundaries(line, pitch):
+    """Where art-pixel edges really fall along one axis. Screenshots scale art by uneven amounts
+    (3, 4, 3, 4 picture pixels per art pixel), so a fixed grid drifts onto the seams and samples
+    blends. Each next edge is snapped to the strongest colour change near where it is expected."""
+    edges = [0]
+    end = len(line) - 1
+    while edges[-1] + pitch * 0.5 < end:
+        guess = edges[-1] + pitch
+        lo, hi = int(guess - pitch * 0.35), int(guess + pitch * 0.35) + 1
+        near = [i for i in range(max(lo, edges[-1] + 1), min(hi, end) + 1)]
+        if not near:
+            break
+        best = max(near, key=lambda i: line[i])
+        edges.append(best if line[best] > 0 else int(round(guess)))
+    if edges[-1] < end:
+        edges.append(end)
+    return edges
+
+
 def guess_pitch(img, box):
     """Size of one art pixel: the spacing that best lines up with colour edges."""
     x0, y0, x1, y1 = box
@@ -114,6 +148,11 @@ def main():
     cols = round((box[2] - box[0]) / pitch)
     rows = round((box[3] - box[1]) / pitch)
     pitch_x, pitch_y = (box[2] - box[0]) / cols, (box[3] - box[1]) / rows
+    snap = "--snap" in sys.argv
+    if snap:                      # follow the picture's real pixel edges instead of a fixed grid
+        col_line, row_line = edge_profiles(img, box)
+        xe, ye = boundaries(col_line, pitch), boundaries(row_line, pitch)
+        cols, rows = len(xe) - 1, len(ye) - 1
     px = img.load()
     ground = border_colour(img)
     cells = []
@@ -121,6 +160,8 @@ def main():
         line = []
         for c in range(cols):
             cx, cy = box[0] + (c + 0.5) * pitch_x, box[1] + (r + 0.5) * pitch_y
+            if snap:
+                cx, cy = box[0] + (xe[c] + xe[c + 1]) / 2, box[1] + (ye[r] + ye[r + 1]) / 2
             # the middle of an art pixel is its cleanest part; on small art that is one picture pixel
             # (--reach 1 averages a 3x3 patch instead, which suits a blurry picture)
             reach = arg("--reach", int(min(pitch_x, pitch_y) * 0.22))

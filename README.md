@@ -45,10 +45,10 @@ Bring your own pictures.
 
 | Command | Shows |
 |---|---|
-| `plants` | one plant at random, drawn at the biggest size that fits the window (double, normal or small) |
+| `plants` | one plant at random, at normal size (or a smaller copy if the window is too small) |
 | `plants <name>` | a specific plant |
 | `plants list` | the names available |
-| `plants garden` | five random plants at small size, side by side |
+| `plants garden` | five random plants side by side, at the biggest size that fits the window |
 | `plants classic` | the first, small version of the row |
 | `plants reset` | puts the tab's colours back to normal |
 

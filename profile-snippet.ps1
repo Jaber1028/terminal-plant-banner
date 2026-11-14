@@ -12,10 +12,10 @@ function plants {
     $dir = "$HOME\.config\pvz-banner"
     $width = if ($Columns) { $Columns } else { $Host.UI.RawUI.WindowSize.Width }
     $height = if ($Rows) { $Rows } else { $Host.UI.RawUI.WindowSize.Height }
-    # One plant is drawn at the biggest size that fits the window: double, normal, then the small sizes.
+    # One plant is drawn at its normal size, or a smaller copy when the window is too small for it.
     $sized = {
         param($name)
-        foreach ($kind in 'double', 'big', 'small40', 'small30', 'small20') {
+        foreach ($kind in 'big', 'small60', 'small50', 'small40', 'small30', 'small20') {
             $f = "$dir\out\$kind-$name.ans"
             if (-not (Test-Path $f)) { continue }
             $lines = [IO.File]::ReadAllLines($f)
@@ -26,19 +26,21 @@ function plants {
     }
     if ($Which -eq 'random') { $Which = (Get-ChildItem "$dir\out\big-*.ans" | Get-Random).BaseName -replace '^big-' }
     $file = switch ($Which) {
-        'garden'  {   # 5 random small plants side by side (about the room of two big ones), one baseline
+        'garden'  {   # 5 random plants side by side on one baseline, at the biggest size where all five fit
             $room = $height - 2
-            $picks = @(); $used = 0
-            # the biggest size at which five fit this window: 40, 30 or 20 columns each
-            $size = foreach ($s in 40, 30, 20) { if (5 * $s + 4 -le $width) { $s; break } }
-            if (-not $size) { $size = 20 }
-            foreach ($f in (Get-ChildItem "$dir\out\small$size-*.ans" | Get-Random -Count 99)) {
-                if ($picks.Count -ge 5) { break }
-                $lines = [IO.File]::ReadAllLines($f.FullName) | Where-Object { ($_ -replace "`e\[[0-9;]*m", '').Trim() }
-                if ($lines.Count -gt $room) { continue }
+            $names = (Get-ChildItem "$dir\out\big-*.ans" | Get-Random -Count 5).BaseName -replace '^big-'
+            $load = {
+                param($f)
+                $lines = @([IO.File]::ReadAllLines($f) | Where-Object { ($_ -replace "`e\[[0-9;]*m", '').Trim() })
                 $w = ($lines | ForEach-Object { ($_ -replace "`e\[[0-9;]*m", '').Length } | Measure-Object -Maximum).Maximum
-                if ($used + $w + 1 -gt $width) { continue }
-                $picks += , @{ Lines = @($lines); Width = $w }; $used += $w + 1
+                @{ Lines = $lines; Width = $w }
+            }
+            # biggest first: normal is the real pixels; the small sizes are shrunk copies
+            foreach ($kind in 'big', 'small60', 'small50', 'small40', 'small30', 'small20') {
+                $picks = @(foreach ($n in $names) { & $load "$dir\out\$kind-$n.ans" })
+                $used = ($picks | ForEach-Object { $_.Width } | Measure-Object -Sum).Sum + $picks.Count - 1
+                $tall = ($picks | ForEach-Object { $_.Lines.Count } | Measure-Object -Maximum).Maximum
+                if ($used -le $width -and $tall -le $room) { break }
             }
             $tall = ($picks | ForEach-Object { $_.Lines.Count } | Measure-Object -Maximum).Maximum
             $out = for ($r = 0; $r -lt $tall; $r++) {

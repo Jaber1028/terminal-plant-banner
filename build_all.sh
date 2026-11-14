@@ -15,14 +15,13 @@ for name in threepeater peapod stump tallnut icestump torchwood twinsunflower ga
             sunflower; do
     python from_image.py "refs/$name.png" "$name" --pitch 3.5 $common $extra
 done
-# small, blurry pictures: a finer grid and a 3x3 average read better than single-pixel sampling
+# small, blurry screenshots: art pixels land 3 or 4 picture pixels apart, so snap to the real edges
 for name in mimenut starfruit magnetshroom doomshroom squash cherries jalapeno snowpea sunshroom cattail cabbagepult melonpult spikeweed; do
-    python from_image.py "refs/$name.png" "$name" --pitch 2.8 --reach 1 $common $extra
+    python from_image.py "refs/$name.png" "$name" --pitch 3.5 --snap $common $extra
 done
 for name in tanglekelp; do
     python from_image.py "refs/$name.png" "$name" --pitch 3.5 $common $extra
 done
 [ "$extra" = "--png" ] && python sheet.py
-for s in "20 28" "30 42" "40 56"; do set -- $s; python make_small.py --width $1 --height $2; done   # sizes for `plants garden`
-python make_double.py   # double size for big windows
+for s in "20 28" "30 42" "40 56" "50 70" "60 84"; do set -- $s; python make_small.py --width $1 --height $2; done   # sizes for `plants garden`
 python make_themes.py
