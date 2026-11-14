@@ -7,7 +7,7 @@
 $PlantsOnStart = 'random'
 # $PlantsTheme: recolour the tab to match the plant shown. "plants reset" restores the normal colours.
 $PlantsTheme = $true
-# $PlantsGarden: 'quality' shows the plants' real pixels, as many as fit (up to five);
+# $PlantsGarden: 'quality' shows the plants' real pixels, as many as fit across the window;
 # 'quantity' always shows five, all shrunk by the same amount to fit.
 $PlantsGarden = 'quality'
 function plants {
@@ -42,41 +42,43 @@ function plants {
     }
     if ($Which -eq 'random') { $Which = (Get-ChildItem "$dir\out\big-*.ans" | Get-Random).BaseName -replace '^big-' }
     $file = switch ($Which) {
-        'garden'  {   # random plants side by side on one baseline. Every plant in a garden is drawn at
-                      # the same scale, so they keep their real sizes relative to each other.
+        'garden'  {   # random plants side by side on one baseline, until the window is full. Every plant
+                      # in a garden is drawn at the same scale, so they keep their real sizes relative to each other.
             $room = $height - 2
             $all = @((Get-ChildItem "$dir\out\big-*.ans" | Get-Random -Count 999).BaseName -replace '^big-')
-            # Fill the row from a shuffled list: take each plant that still fits, up to five.
+            # Fill the row left to right from the shuffled list: every plant that still fits goes in,
+            # one that doesn't is skipped (a narrower one later may fit), and it stops when the list
+            # runs out or the space left is too small for any plant.
             $pack = {
-                param($kind, $want)
+                param($kind, $want = 999)
                 $row = @(); $used = -2
                 foreach ($n in $all) {
-                    if ($row.Count -ge $want) { break }
-                    $art = & $load "$dir\out\$kind-$n.ans"
+                    if ($row.Count -ge $want -or $width - $used - 2 -lt 8) { break }
+                    $f = "$dir\out\$kind-$n.ans"
+                    if (-not (Test-Path $f)) { continue }
+                    $art = & $load $f
                     if ($art.Lines.Count -gt $room -or $used + 2 + $art.Width -gt $width) { continue }
                     $row += , $art; $used += 2 + $art.Width
                 }
                 , $row
             }
-            $picks = $null
+            $picks = @()
             if ($PlantsGarden -eq 'quantity') {
-                # five plants, shrunk together just enough to fit
+                # exactly five, at the biggest shared shrink where five fit
                 foreach ($kind in 'big', 's75', 's60', 's50', 's40') {
-                    $row = & $pack $kind 5
-                    if ($row.Count -ge 5) { $picks = $row; break }
+                    $picks = & $pack $kind 5
+                    if ($picks.Count -ge 5) { break }
                 }
             } else {
-                # quality: the plants' real pixels, never shrunk; as many as fit, up to five
-                $row = & $pack 'big' 5
-                if ($row.Count -ge 1) { $picks = $row }
+                $picks = & $pack 'big'   # quality: the plants' real pixels, never shrunk
             }
-            if (-not $picks) {   # nothing fits at that size: the most plants at the biggest size that holds any
+            if ($picks.Count -eq 0) {   # nothing fits at real size: the biggest shrink that holds any
                 foreach ($kind in 's75', 's60', 's50', 's40') {
-                    $row = & $pack $kind 5
-                    if ($row.Count -ge 1 -and (-not $picks -or $row.Count -gt $picks.Count)) { $picks = $row }
-                    if ($picks -and $picks.Count -ge 2) { break }
+                    $picks = & $pack $kind
+                    if ($picks.Count -ge 1) { break }
                 }
             }
+            if ($picks.Count -eq 0) { $picks = @(& $load "$dir\out\s40-$($all[0]).ans") }
             if (-not $picks) { $picks = @(& $load "$dir\out\s40-$($all[0]).ans") }
             $tall = ($picks | ForEach-Object { $_.Lines.Count } | Measure-Object -Maximum).Maximum
             $out = for ($r = 0; $r -lt $tall; $r++) {
