@@ -12,6 +12,7 @@ function plants {
     param([string]$Which = 'random', [int]$Count = 0, [int]$Columns = 0, [int]$Rows = 0)
     $dir = "$HOME/.config/pvz-banner"
     $picked = $null   # set when 'random' has already chosen a plant and its size
+    $iterm = $env:TERM_PROGRAM -eq 'iTerm.app' -or $env:LC_TERMINAL -eq 'iTerm2'
     # Sizes are in character cells, so a bigger or smaller font (fewer or more cells) is handled the
     # same way as a smaller or bigger window. The last column is never used: writing into it makes
     # the terminal wrap, which splits every row of the art in two.
@@ -101,14 +102,23 @@ function plants {
         'classic' {   # the first, fixed-size row; a garden instead when the window is too narrow for it
             if ($width -ge 96) { "$dir/out/classic.ans" } else { plants garden -Columns ($width + 1) -Rows $height; return }
         }
-        'reset'   { Write-Host "`e]110`e\`e]111`e\`e]112`e\" -NoNewline; return }   # back to the terminal's own colours
+        'reset'   {   # back to the terminal's own colours: text, background, cursor, selection
+            Write-Host "`e]110`e\`e]111`e\`e]112`e\`e]117`e\`e]119`e\" -NoNewline
+            if ($iterm) { Write-Host "`e]1337;SetColors=tab=default`e\" -NoNewline }
+            return
+        }
         'list'    { Write-Host ((Get-ChildItem "$dir/out/big-*.ans").BaseName -replace '^big-' -join ', '); return }
         default   { if ($picked) { $picked } elseif (Test-Path "$dir/out/big-$Which.ans") { & $sized $Which } }
     }
     if ($file -and (Test-Path $file)) {
         # recolour this tab (background, text, cursor) to suit the plant, when it has a theme
         $theme = [IO.Path]::ChangeExtension($file, '.theme')
-        if ($PlantsTheme -and (Test-Path $theme)) { Write-Host ([IO.File]::ReadAllText($theme)) -NoNewline }
+        if ($PlantsTheme -and (Test-Path $theme)) {
+            Write-Host ([IO.File]::ReadAllText($theme)) -NoNewline
+            # iTerm2 takes selection, cursor-text and tab colours only through its own codes
+            $extra = [IO.Path]::ChangeExtension($file, '.iterm')
+            if ($iterm -and (Test-Path $extra)) { Write-Host ([IO.File]::ReadAllText($extra)) -NoNewline }
+        }
         Write-Host ("`n" + ((& $load $file).Lines -join "`n") + "`n")
     }
     else { Write-Host "plants: nothing called '$Which'. Try random, garden, classic, or a name from 'plants list'." }

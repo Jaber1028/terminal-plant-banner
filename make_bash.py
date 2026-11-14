@@ -37,9 +37,9 @@ for path in sorted(glob.glob(os.path.join(here, "out", "*.ans"))):
     lines = [l + " " * (width - len(codes.sub("", l))) for l in lines]
     with open(os.path.join(art, base + ".ans"), "w", encoding="utf-8", newline="\n") as f:
         f.write("\n".join(lines) + "\n")
-    theme = path[:-4] + ".theme"
-    if os.path.exists(theme):
-        shutil.copyfile(theme, os.path.join(art, base + ".theme"))
+    for suffix in (".theme", ".iterm"):
+        if os.path.exists(path[:-4] + suffix):
+            shutil.copyfile(path[:-4] + suffix, os.path.join(art, base + suffix))
     rows.append(f"{kind}\t{name}\t{width}\t{len(lines)}")
 with open(os.path.join(build, "index.tsv"), "w", encoding="utf-8", newline="\n") as f:
     f.write("\n".join(rows) + "\n")

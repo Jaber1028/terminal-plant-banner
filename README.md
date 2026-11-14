@@ -169,7 +169,12 @@ an unofficial fan project with no connection to them.
 
 ## Notes
 
-- Tinting uses the OSC 10/11/12 escape codes and `plants reset` uses OSC 110/111/112. Terminals
-  that don't support them ignore them; the art still draws.
+- Tinting sets the background, text, cursor and selection colours with the standard OSC 10, 11,
+  12, 17 and 19 escape codes, and `plants reset` undoes them (OSC 110, 111, 112, 117, 119).
+  Terminals that don't support a code ignore it; the art still draws.
+- In iTerm2 the selection, the text under the cursor and the tab colour are also set with iTerm2's
+  own `SetColors` code. iTerm2 has no code for the cursor guide's colour, so that stays as your
+  profile has it, and it documents a reset only for the tab colour: the others last until the
+  session closes.
 - On start-up the banner is skipped for scripts, redirected output and windows narrower than
   60 columns.

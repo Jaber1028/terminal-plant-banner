@@ -49,10 +49,16 @@ _plants_names() {
     for key in "${!_PLANTS_W[@]}"; do [[ $key == big-* ]] && printf '%s\n' "${key#big-}"; done | sort
 }
 
-_plants_show() {   # print one banner file, with its tab tint first
+_plants_iterm() {   # iTerm2, locally (TERM_PROGRAM) or over ssh (LC_TERMINAL, which ssh passes on)
+    [[ ${TERM_PROGRAM:-} == iTerm.app || ${LC_TERMINAL:-} == iTerm2 ]]
+}
+
+_plants_show() {   # print one banner file, with its tint first
     local base=$1
     if [[ $PLANTS_THEME == 1 && -r $PLANTS_DIR/art/$base.theme ]]; then
         cat "$PLANTS_DIR/art/$base.theme"
+        # iTerm2 takes selection, cursor-text and tab colours only through its own codes
+        if _plants_iterm && [[ -r $PLANTS_DIR/art/$base.iterm ]]; then cat "$PLANTS_DIR/art/$base.iterm"; fi
     fi
     printf '\n'
     cat "$PLANTS_DIR/art/$base.ans"
@@ -129,7 +135,10 @@ plants() {
             printf -v joined '%s, ' "${names[@]}"
             printf '%s\n' "${joined%, }"
             return ;;
-        reset)  printf '\033]110\033\\\033]111\033\\\033]112\033\\'; return ;;
+        reset)  # text, background, cursor, selection background and selection text
+            printf '\033]110\033\\\033]111\033\\\033]112\033\\\033]117\033\\\033]119\033\\'
+            if _plants_iterm; then printf '\033]1337;SetColors=tab=default\033\\'; fi
+            return ;;
         garden) _plants_garden "$count" "$width" "$room"; return ;;
         random)   # a random plant among those that fit this window at some size; none fit, nothing shown
             local name
