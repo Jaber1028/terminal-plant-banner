@@ -27,3 +27,4 @@ for f in 0.75 0.6 0.5 0.4; do python make_small.py --factor $f; done   # every p
 python make_scaled.py   # 2x and 3x for a single plant in a big window
 python make_themes.py
 [ "$extra" = "--png" ] && python sheet.py
+python make_linux.py   # the bash version's bundle, linux/build/ (copy it to a Linux box and run install.sh)
