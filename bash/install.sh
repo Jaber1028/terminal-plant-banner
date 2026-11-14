@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Run on the Linux box, from the folder holding plants.sh, art/ and index.tsv:
+# Run on the target machine, from the folder holding plants.sh, art/ and index.tsv:
 #   bash install.sh
 # Copies them to ~/.config/pvz-banner and hooks ~/.bashrc so an interactive login shows a plant,
 # and ~/.bash_logout so the tab's colours go back to normal when you log out.
@@ -9,7 +9,7 @@ dest="$HOME/.config/pvz-banner"
 mkdir -p "$dest"
 if [[ $here != "$dest" ]]; then
     rm -rf "$dest/art"
-    cp -r "$here/art" "$here/index.tsv" "$here/plants.sh" "$dest/"
+    cp -r "$here/art" "$here/index.tsv" "$here/plants.sh" "$here/test.sh" "$dest/"
 fi
 
 marker='# pvz-banner'
@@ -19,7 +19,7 @@ if ! grep -qF "$marker" "$HOME/.bashrc" 2>/dev/null; then
 
 # pvz-banner: a random plant when you log in. Interactive shells on a real terminal only, so scp,
 # rsync, cron and `ssh box command` never see it; once per session (shells started inside it
-# inherit PLANTS_SHOWN). A login shell, or the first shell of an ssh session: some NAS systems
+# inherit PLANTS_SHOWN). A login shell, or the first shell of an ssh session: some systems
 # start that one through a wrapper as a plain interactive shell, not a login shell.
 # `plants` itself is there in every interactive shell.
 if [[ $- == *i* && -r "$HOME/.config/pvz-banner/plants.sh" ]]; then

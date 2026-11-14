@@ -7,8 +7,6 @@ Each character cell is two pixels tall (half blocks), so a banner renders exactl
 import re
 import sys
 
-from PIL import Image
-
 BACK = (30, 30, 30)
 token = re.compile(r"\x1b\[([0-9;]*)m|(.)", re.S)
 
@@ -43,6 +41,7 @@ def cells(path):
 
 
 def main():
+    from PIL import Image          # only drawing a PNG needs Pillow; cells() is used without it
     args = [a for a in sys.argv[1:] if not a.startswith("--")]
     per = int(sys.argv[sys.argv.index("--per") + 1]) if "--per" in sys.argv else 99
     scale = int(sys.argv[sys.argv.index("--scale") + 1]) if "--scale" in sys.argv else 6

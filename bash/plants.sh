@@ -1,5 +1,5 @@
 # shellcheck shell=bash
-# Garden plant banner for bash. Source this from ~/.bashrc (see linux/install.sh).
+# Garden plant banner for bash 4.2+ on any Unix-like system. Source it from ~/.bashrc (see install.sh).
 #
 #   plants              one random plant, as big as the window allows
 #   plants <name>       that plant
@@ -17,6 +17,12 @@ PLANTS_THEME="${PLANTS_THEME:-1}"
 
 # width and height of every banner, keyed "kind-name"
 declare -gA _PLANTS_W=() _PLANTS_H=()
+
+_plants_shuffle() {   # shuf where it exists (GNU coreutils), otherwise a random sort in awk
+    if command -v shuf >/dev/null 2>&1; then shuf "$@"
+    else awk 'BEGIN { srand() } { print rand() "\t" $0 }' | sort -n | cut -f2- | { if [[ $1 == -n ]]; then head -n "$2"; else cat; fi; }
+    fi
+}
 
 _plants_load_index() {
     (( ${#_PLANTS_W[@]} )) && return
@@ -61,7 +67,7 @@ _plants_pack() {
 
 _plants_garden() {
     local count=$1 width=$2 room=$3 kind best=() tall=0 key i
-    mapfile -t _PLANTS_SHUFFLED < <(_plants_names | shuf)
+    mapfile -t _PLANTS_SHUFFLED < <(_plants_names | _plants_shuffle)
     _plants_pack big 9999 "$width" "$room"                     # real pixels, as many as fit
     if (( count > 0 && count < ${#_PLANTS_ROW[@]} )); then
         _plants_pack big "$count" "$width" "$room"            # asked for fewer: just that many
@@ -80,7 +86,11 @@ _plants_garden() {
             (( ${#_PLANTS_ROW[@]} )) && break
         done
     fi
-    (( ${#_PLANTS_ROW[@]} )) || _PLANTS_ROW=("s40-${_PLANTS_SHUFFLED[0]}")
+    if (( ${#_PLANTS_ROW[@]} == 0 )); then                      # nothing fits: the smallest there is
+        for kind in s40 s50 s60 s75 big; do
+            [[ -n ${_PLANTS_W[$kind-${_PLANTS_SHUFFLED[0]}]} ]] && { _PLANTS_ROW=("$kind-${_PLANTS_SHUFFLED[0]}"); break; }
+        done
+    fi
 
     for key in "${_PLANTS_ROW[@]}"; do (( _PLANTS_H[$key] > tall )) && tall=${_PLANTS_H[$key]}; done
     # each plant becomes a column of exactly `tall` rows, sitting on the shared baseline;
@@ -117,16 +127,30 @@ plants() {
         list)   _plants_names | paste -sd ' ' | sed 's/ /, /g'; return ;;
         reset)  printf '\033]110\033\\\033]111\033\\\033]112\033\\'; return ;;
         garden) _plants_garden "$count" "$width" "$room"; return ;;
-        random) which=$(_plants_names | shuf -n 1) ;;
+        random)   # a random plant among those that fit this window at some size; none fit, nothing shown
+            local name
+            while IFS= read -r name; do
+                key=$(_plants_fit "$name" "$width" "$room") && { _plants_show "$key"; return; }
+            done < <(_plants_names | _plants_shuffle)
+            return ;;
     esac
     if [[ -z ${_PLANTS_W[big-$which]} ]]; then
         echo "plants: nothing called '$which'. Try random, garden, or a name from 'plants list'." >&2
         return 1
     fi
-    for kind in x3 x2 big s75 s60 s50 s40; do      # one plant: as big as the window allows
-        key=$kind-$which
-        [[ -n ${_PLANTS_W[$key]} ]] || continue
-        if (( _PLANTS_W[$key] <= width && _PLANTS_H[$key] <= room )); then _plants_show "$key"; return; fi
+    if key=$(_plants_fit "$which" "$width" "$room"); then _plants_show "$key"; return; fi
+    # asked for by name but too big for the window at every size it has: the smallest of them
+    for kind in s40 s50 s60 s75 big; do
+        [[ -n ${_PLANTS_W[$kind-$which]} ]] && { _plants_show "$kind-$which"; return; }
     done
-    _plants_show "s40-$which"
+}
+
+_plants_fit() {   # the biggest size of a plant that fits the window, as "kind-name"; fails if none
+    local name=$1 width=$2 room=$3 kind key
+    for kind in x3 x2 big s75 s60 s50 s40; do
+        key=$kind-$name
+        [[ -n ${_PLANTS_W[$key]} ]] || continue
+        if (( _PLANTS_W[$key] <= width && _PLANTS_H[$key] <= room )); then printf '%s' "$key"; return 0; fi
+    done
+    return 1
 }

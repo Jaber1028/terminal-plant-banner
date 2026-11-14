@@ -1,4 +1,4 @@
-# Garden plant banner on terminal start. Art lives in ~\.config\pvz-banner (make_big.py rebuilds it).
+# Garden plant banner on terminal start. Art lives in ~/.config/pvz-banner (make_big.py rebuilds it).
 #   plants               one big plant, picked at random
 #   plants garden        random plants at full size across the window; "plants garden 8" asks for eight
 #   plants classic       the small original row
@@ -10,7 +10,7 @@ $PlantsTheme = $true
 function plants {
     # plants garden 8: ask for 8 plants (see the garden below). -Columns/-Rows: pretend the window is this big.
     param([string]$Which = 'random', [int]$Count = 0, [int]$Columns = 0, [int]$Rows = 0)
-    $dir = "$HOME\.config\pvz-banner"
+    $dir = "$HOME/.config/pvz-banner"
     # Sizes are in character cells, so a bigger or smaller font (fewer or more cells) is handled the
     # same way as a smaller or bigger window. The last column is never used: writing into it makes
     # the terminal wrap, which splits every row of the art in two.
@@ -28,22 +28,33 @@ function plants {
     $sizes = 'x3', 'x2', 'big', 's75', 's60', 's50', 's40'
     # One plant on its own is drawn as big as the window allows; the garden stops at normal size,
     # so a single plant is always the bigger one.
-    $sized = {
+    $fits = {   # the biggest size of a plant that fits the window, or nothing
         param($name)
         foreach ($kind in $sizes) {
-            $f = "$dir\out\$kind-$name.ans"
+            $f = "$dir/out/$kind-$name.ans"
             if (-not (Test-Path $f)) { continue }
             $art = & $load $f
             if ($art.Width -le $width -and $art.Lines.Count -le $height - 2) { return $f }
         }
-        "$dir\out\s40-$name.ans"
     }
-    if ($Which -eq 'random') { $Which = (Get-ChildItem "$dir\out\big-*.ans" | Get-Random).BaseName -replace '^big-' }
+    $sized = {   # as $fits, but a plant asked for by name always shows: the smallest size there is
+        param($name)
+        $f = & $fits $name
+        if ($f) { return $f }
+        foreach ($kind in 's40', 's50', 's60', 's75', 'big') { if (Test-Path "$dir/out/$kind-$name.ans") { return "$dir/out/$kind-$name.ans" } }
+    }
+    if ($Which -eq 'random') {   # a random plant among those that fit this window; none fit, nothing shown
+        foreach ($n in ((Get-ChildItem "$dir/out/big-*.ans" | Get-Random -Count 999).BaseName -replace '^big-')) {
+            $f = & $fits $n
+            if ($f) { $Which = $n; break }
+        }
+        if (-not $f) { return }
+    }
     $file = switch ($Which) {
         'garden'  {   # random plants side by side on one baseline, until the window is full. Every plant
                       # in a garden is drawn at the same scale, so they keep their real sizes relative to each other.
             $room = $height - 2
-            $all = @((Get-ChildItem "$dir\out\big-*.ans" | Get-Random -Count 999).BaseName -replace '^big-')
+            $all = @((Get-ChildItem "$dir/out/big-*.ans" | Get-Random -Count 999).BaseName -replace '^big-')
             # Fill the row left to right from the shuffled list: every plant that still fits goes in,
             # one that doesn't is skipped (a narrower one later may fit), and it stops when the list
             # runs out or the space left is too small for any plant.
@@ -52,7 +63,7 @@ function plants {
                 $row = @(); $used = -2
                 foreach ($n in $all) {
                     if ($row.Count -ge $want -or $width - $used - 2 -lt 8) { break }
-                    $f = "$dir\out\$kind-$n.ans"
+                    $f = "$dir/out/$kind-$n.ans"
                     if (-not (Test-Path $f)) { continue }
                     $art = & $load $f
                     if ($art.Lines.Count -gt $room -or $used + 2 + $art.Width -gt $width) { continue }
@@ -82,7 +93,7 @@ function plants {
                     if ($picks.Count -ge 1) { break }
                 }
             }
-            if ($picks.Count -eq 0) { $picks = @(& $load "$dir\out\s40-$($all[0]).ans") }
+            if ($picks.Count -eq 0) { $picks = @(& $load (& $sized $all[0])) }
             $tall = ($picks | ForEach-Object { $_.Lines.Count } | Measure-Object -Maximum).Maximum
             $out = for ($r = 0; $r -lt $tall; $r++) {
                 $row = for ($p = 0; $p -lt $picks.Count; $p++) {
@@ -97,11 +108,11 @@ function plants {
             Write-Host ("`n" + ($out -join "`n") + "`n"); return
         }
         'classic' {   # the first, fixed-size row; a garden instead when the window is too narrow for it
-            if ($width -ge 96) { "$dir\saved\small-row\banner.ans" } else { plants garden -Columns ($width + 1) -Rows $height; return }
+            if ($width -ge 96) { "$dir/saved/small-row/banner.ans" } else { plants garden -Columns ($width + 1) -Rows $height; return }
         }
         'reset'   { Write-Host "`e]110`e\`e]111`e\`e]112`e\" -NoNewline; return }   # back to the terminal's own colours
-        'list'    { Write-Host ((Get-ChildItem "$dir\out\big-*.ans").BaseName -replace '^big-' -join ', '); return }
-        default   { if (Test-Path "$dir\out\big-$Which.ans") { & $sized $Which } }
+        'list'    { Write-Host ((Get-ChildItem "$dir/out/big-*.ans").BaseName -replace '^big-' -join ', '); return }
+        default   { if (Test-Path "$dir/out/big-$Which.ans") { & $sized $Which } }
     }
     if ($file -and (Test-Path $file)) {
         # recolour this tab (background, text, cursor) to suit the plant, when it has a theme

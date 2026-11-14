@@ -1,9 +1,9 @@
-"""Builds linux/build/: everything a Linux box needs for `plants`, ready to copy to
+"""Builds bash/build/: everything a Unix-like machine needs for `plants`, ready to copy to
 ~/.config/pvz-banner/ there.
 
-    linux/build/plants.sh          the bash version of `plants` (copied from linux/plants.sh)
-    linux/build/art/<kind>-<name>.ans and .theme
-    linux/build/index.tsv          kind, name, width, height of every banner
+    bash/build/plants.sh          the bash version of `plants` (copied from bash/plants.sh)
+    bash/build/art/<kind>-<name>.ans and .theme
+    bash/build/index.tsv          kind, name, width, height of every banner
 
 Each banner is tidied for bash, which has no cheap way to measure text that holds colour codes:
 blank rows are dropped, and every row is cut to its last drawn cell and then padded with plain
@@ -18,7 +18,7 @@ import shutil
 here = os.path.dirname(os.path.abspath(__file__))
 codes = re.compile(r"\x1b\[[0-9;]*m")
 blank_tail = re.compile(r"(?:\x1b\[0m )+(?:\x1b\[0m)?$")
-build = os.path.join(here, "linux", "build")
+build = os.path.join(here, "bash", "build")
 art = os.path.join(build, "art")
 shutil.rmtree(build, ignore_errors=True)
 os.makedirs(art)
@@ -41,5 +41,6 @@ for path in sorted(glob.glob(os.path.join(here, "out", "*.ans"))):
     rows.append(f"{kind}\t{name}\t{width}\t{len(lines)}")
 with open(os.path.join(build, "index.tsv"), "w", encoding="utf-8", newline="\n") as f:
     f.write("\n".join(rows) + "\n")
-shutil.copyfile(os.path.join(here, "linux", "plants.sh"), os.path.join(build, "plants.sh"))
+for script in ("plants.sh", "install.sh", "test.sh"):
+    shutil.copyfile(os.path.join(here, "bash", script), os.path.join(build, script))
 print(f"{len(rows)} banners in {build}")
