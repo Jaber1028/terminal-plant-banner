@@ -7,8 +7,8 @@
 $PlantsOnStart = 'random'
 # $PlantsTheme: recolour the tab to match the plant shown. "plants reset" restores the normal colours.
 $PlantsTheme = $true
-# $PlantsGarden: 'quality' keeps the garden's plants big (three to five, as many as fit);
-# 'quantity' always shows five, shrinking them to fit.
+# $PlantsGarden: 'quality' shows the plants' real pixels, as many as fit (up to five);
+# 'quantity' always shows five, all shrunk by the same amount to fit.
 $PlantsGarden = 'quality'
 function plants {
     param([string]$Which = 'random', [int]$Columns = 0, [int]$Rows = 0)   # -Columns/-Rows: pretend the window is this big
@@ -26,7 +26,8 @@ function plants {
                    ForEach-Object { ($_ -replace "(`e\[0m )+(`e\[0m)?$", '') + "`e[0m" })
         @{ Lines = $lines; Width = ($lines | ForEach-Object { & $visible $_ } | Measure-Object -Maximum).Maximum }
     }
-    $sizes = 'x3', 'x2', 'big', 'small60', 'small50', 'small40', 'small30', 'small20'
+    # x3/x2: enlarged; big: the real pixels; s75..s40: every plant shrunk by the same amount
+    $sizes = 'x3', 'x2', 'big', 's75', 's60', 's50', 's40'
     # One plant on its own is drawn as big as the window allows; the garden stops at normal size,
     # so a single plant is always the bigger one.
     $sized = {
@@ -37,32 +38,46 @@ function plants {
             $art = & $load $f
             if ($art.Width -le $width -and $art.Lines.Count -le $height - 2) { return $f }
         }
-        "$dir\out\small20-$name.ans"
+        "$dir\out\s40-$name.ans"
     }
     if ($Which -eq 'random') { $Which = (Get-ChildItem "$dir\out\big-*.ans" | Get-Random).BaseName -replace '^big-' }
     $file = switch ($Which) {
-        'garden'  {   # random plants side by side on one baseline: five at the biggest size that fits,
-                      # or fewer when even the smallest five are too wide for the window
+        'garden'  {   # random plants side by side on one baseline. Every plant in a garden is drawn at
+                      # the same scale, so they keep their real sizes relative to each other.
             $room = $height - 2
-            $names = @((Get-ChildItem "$dir\out\big-*.ans" | Get-Random -Count 5).BaseName -replace '^big-')
-            $kinds = 'big', 'small60', 'small50', 'small40', 'small30', 'small20'
-            # $PlantsGarden 'quality': the biggest size at which at least three fit (up to five);
-            # 'quantity': always five, shrinking them as far as needed. Either way, fewer only as a last resort.
-            $tries = if ($PlantsGarden -eq 'quantity') {
-                foreach ($count in 5, 4, 3, 2, 1) { foreach ($kind in $kinds) { , @($kind, $count) } }
-            } else {
-                foreach ($kind in $kinds) { foreach ($count in 5, 4, 3) { , @($kind, $count) } }
-                foreach ($count in 2, 1) { foreach ($kind in $kinds) { , @($kind, $count) } }
+            $all = @((Get-ChildItem "$dir\out\big-*.ans" | Get-Random -Count 999).BaseName -replace '^big-')
+            # Fill the row from a shuffled list: take each plant that still fits, up to five.
+            $pack = {
+                param($kind, $want)
+                $row = @(); $used = -2
+                foreach ($n in $all) {
+                    if ($row.Count -ge $want) { break }
+                    $art = & $load "$dir\out\$kind-$n.ans"
+                    if ($art.Lines.Count -gt $room -or $used + 2 + $art.Width -gt $width) { continue }
+                    $row += , $art; $used += 2 + $art.Width
+                }
+                , $row
             }
             $picks = $null
-            foreach ($t in $tries) {
-                $kind, $count = $t
-                $try = @(foreach ($n in $names[0..($count - 1)]) { & $load "$dir\out\$kind-$n.ans" })
-                $used = ($try | ForEach-Object { $_.Width } | Measure-Object -Sum).Sum + 2 * ($try.Count - 1)
-                $tall = ($try | ForEach-Object { $_.Lines.Count } | Measure-Object -Maximum).Maximum
-                if ($used -le $width -and $tall -le $room) { $picks = $try; break }
+            if ($PlantsGarden -eq 'quantity') {
+                # five plants, shrunk together just enough to fit
+                foreach ($kind in 'big', 's75', 's60', 's50', 's40') {
+                    $row = & $pack $kind 5
+                    if ($row.Count -ge 5) { $picks = $row; break }
+                }
+            } else {
+                # quality: the plants' real pixels, never shrunk; as many as fit, up to five
+                $row = & $pack 'big' 5
+                if ($row.Count -ge 1) { $picks = $row }
             }
-            if (-not $picks) { $picks = @(& $load "$dir\out\small20-$($names[0]).ans") }
+            if (-not $picks) {   # nothing fits at that size: the most plants at the biggest size that holds any
+                foreach ($kind in 's75', 's60', 's50', 's40') {
+                    $row = & $pack $kind 5
+                    if ($row.Count -ge 1 -and (-not $picks -or $row.Count -gt $picks.Count)) { $picks = $row }
+                    if ($picks -and $picks.Count -ge 2) { break }
+                }
+            }
+            if (-not $picks) { $picks = @(& $load "$dir\out\s40-$($all[0]).ans") }
             $tall = ($picks | ForEach-Object { $_.Lines.Count } | Measure-Object -Maximum).Maximum
             $out = for ($r = 0; $r -lt $tall; $r++) {
                 $row = for ($p = 0; $p -lt $picks.Count; $p++) {

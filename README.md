@@ -53,8 +53,8 @@ Bring your own pictures.
 | `plants classic` | the first, small version of the row |
 | `plants reset` | puts the tab's colours back to normal |
 
-In the profile snippet, `$PlantsGarden` is `quality` (three to five big plants) or `quantity` (always
-five, shrunk to fit), and `$PlantsOnStart` sets what a new terminal shows (`random`, `garden`,
+In the profile snippet, `$PlantsGarden` is `quality` (real pixels, as many as fit) or `quantity` (always
+five, all shrunk by the same amount), and `$PlantsOnStart` sets what a new terminal shows (`random`, `garden`,
 `classic`, a plant name, or `off`) and `$PlantsTheme` turns the tab tinting on or off.
 
 ## Adding a plant from a picture

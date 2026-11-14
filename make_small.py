@@ -24,13 +24,16 @@ def arg(flag, default):
 
 
 WIDTH, HEIGHT = arg("--width", 20), arg("--height", 28)
+# --factor 0.5: shrink every plant by the same amount instead of fitting it into a box, so a
+# garden keeps the plants' real sizes relative to each other (out/s50-<name>.ans)
+FACTOR = arg("--factor", 0.0)
 
 
 def shrink(grid):
     h = len(grid)
     w = max(len(r) for r in grid)
     grid = [r + [None] * (w - len(r)) for r in grid]
-    scale = min(WIDTH / w, HEIGHT / h, 1.0)
+    scale = FACTOR or min(WIDTH / w, HEIGHT / h, 1.0)
     nw, nh = max(1, round(w * scale)), max(1, round(h * scale))
     out = []
     for y in range(nh):
@@ -62,7 +65,7 @@ def shrink_smooth(grid):
             if c:
                 img.putpixel((x, y), c + (255,))
     palette = list({c for r in grid for c in r if c})
-    scale = min(WIDTH / w, HEIGHT / h, 1.0)
+    scale = FACTOR or min(WIDTH / w, HEIGHT / h, 1.0)
     nw, nh = max(1, round(w * scale)), max(1, round(h * scale))
     # premultiplied so see-through pixels don't drag black into the edges
     small = img.convert("RGBa").resize((nw, nh), Image.Resampling.LANCZOS).convert("RGBA")
@@ -71,7 +74,7 @@ def shrink_smooth(grid):
         row = []
         for x in range(nw):
             r, g, b, a = small.getpixel((x, y))
-            if a < 110:
+            if a < 80:          # keep edge pixels, so outlines don't break into gaps
                 row.append(None)
                 continue
             row.append(min(palette, key=lambda p: (p[0] - r) ** 2 * 3 + (p[1] - g) ** 2 * 4 + (p[2] - b) ** 2 * 2))
@@ -103,7 +106,7 @@ def main():
     count = 0
     for path in sorted(glob.glob(os.path.join(here, "out", "big-*.ans"))):
         small = (shrink if "--blocks" in sys.argv else shrink_smooth)(cells(path))
-        name = os.path.basename(path).replace("big-", f"small{WIDTH}-")
+        name = os.path.basename(path).replace("big-", f"s{round(FACTOR * 100)}-" if FACTOR else f"small{WIDTH}-")
         with open(os.path.join(here, "out", name), "w", encoding="utf-8", newline="\n") as f:
             f.write(text(small))
         count += 1

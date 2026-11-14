@@ -23,7 +23,7 @@ python from_image.py refs/full-sheet.png gloomshroom --crop 308,1135,508,1315 $c
 # The chomper picture is a much bigger, sharper copy than the sheet's, so it wins.
 python from_image.py refs/chomper.png chomper --drop 170,146,170 --drop-tol 60 --merge 36 $extra
 
-for s in "20 28" "30 42" "40 56" "50 70" "60 84"; do set -- $s; python make_small.py --width $1 --height $2; done   # sizes for `plants garden`
+for f in 0.75 0.6 0.5 0.4; do python make_small.py --factor $f; done   # every plant shrunk by the same amount, for small windows and `plants garden`
 python make_scaled.py   # 2x and 3x for a single plant in a big window
 python make_themes.py
 [ "$extra" = "--png" ] && python sheet.py
