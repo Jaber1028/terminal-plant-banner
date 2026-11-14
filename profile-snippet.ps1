@@ -8,9 +8,9 @@ $PlantsOnStart = 'random'
 # $PlantsTheme: recolour the tab to match the plant shown. "plants reset" restores the normal colours.
 $PlantsTheme = $true
 function plants {
-    param([string]$Which = 'random')
+    param([string]$Which = 'random', [int]$Columns = 0)   # -Columns: pretend the window is this wide
     $dir = "$HOME\.config\pvz-banner"
-    $width = $Host.UI.RawUI.WindowSize.Width
+    $width = if ($Columns) { $Columns } else { $Host.UI.RawUI.WindowSize.Width }
     $file = switch ($Which) {
         'random'  {   # only plants short enough for this window, so a tall one never scrolls its top away
             $room = $Host.UI.RawUI.WindowSize.Height - 2
@@ -21,7 +21,10 @@ function plants {
         'garden'  {   # 5 random small plants side by side (about the room of two big ones), one baseline
             $room = $Host.UI.RawUI.WindowSize.Height - 2
             $picks = @(); $used = 0
-            foreach ($f in (Get-ChildItem "$dir\out\small-*.ans" | Get-Random -Count 99)) {
+            # the biggest size at which five fit this window: 40, 30 or 20 columns each
+            $size = foreach ($s in 40, 30, 20) { if (5 * $s + 4 -le $width) { $s; break } }
+            if (-not $size) { $size = 20 }
+            foreach ($f in (Get-ChildItem "$dir\out\small$size-*.ans" | Get-Random -Count 99)) {
                 if ($picks.Count -ge 5) { break }
                 $lines = [IO.File]::ReadAllLines($f.FullName) | Where-Object { ($_ -replace "`e\[[0-9;]*m", '').Trim() }
                 if ($lines.Count -gt $room) { continue }

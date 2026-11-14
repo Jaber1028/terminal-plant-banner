@@ -102,7 +102,7 @@ def text(grid):
 count = 0
 for path in sorted(glob.glob(os.path.join(here, "out", "big-*.ans"))):
     small = (shrink if "--blocks" in sys.argv else shrink_smooth)(cells(path))
-    name = os.path.basename(path).replace("big-", "small-")
+    name = os.path.basename(path).replace("big-", f"small{WIDTH}-")
     with open(os.path.join(here, "out", name), "w", encoding="utf-8", newline="\n") as f:
         f.write(text(small))
     count += 1
