@@ -37,8 +37,9 @@ any pixel art.
 | `render_ans.py`, `sheet.py` | draw banners as PNG images, and put check images side by side |
 | `ps-test.ps1`, `bash/test.sh` | check every view fits a range of window sizes |
 
-Both versions need Python 3 once, to build the banners. Pillow (`pip install pillow`) is
-optional: without it plants are never drawn smaller than their real size.
+Both versions need Python 3 once, to build the banners; nothing else. Pillow is only needed to
+convert your own pictures (`from_image.py`, `split_sheet.py`); if it is installed, the build also
+uses it for slightly smoother small sizes.
 
 ## Install: bash or zsh on Linux, macOS or any Unix-like system
 
@@ -71,9 +72,10 @@ places. `shuf` is used when there; without it a random sort in `awk` does the sa
 GNU, BSD and BusyBox tools.
 
 **macOS:** the built-in bash is 3.2, so run `brew install bash` first; your login shell (zsh) can
-stay as it is. For the smaller sizes, install Pillow into the same `python3` the build uses:
-`python3 -m pip install --user pillow` (add `--break-system-packages` if pip asks for it; a
-Homebrew Pillow may belong to a different Python), then run `bash install.sh` again.
+stay as it is. If you want Pillow (for converting pictures), install it into the same `python3`
+the build uses: `python3 -m pip install --user --break-system-packages pillow`. `brew install
+pillow` can land in a different Homebrew Python than the `python3` on your PATH, and then the
+build doesn't see it; `python3 -c "import PIL"` tells you whether it can.
 
 To install on a machine without Python, build on another one, copy `bash/build/` over and run its
 `install.sh`. `bash test.sh` in the installed folder checks every view fits several window sizes.
@@ -108,8 +110,8 @@ The same in both versions:
 | `plants` | one plant at random, as big as the window allows (3x, 2x, normal or smaller) |
 | `plants <name>` | a specific plant |
 | `plants list` | the names available |
-| `plants garden` | random plants side by side at their real pixels, until the row is full |
-| `plants garden 8` | eight plants: fewer than fit stay full size; more are shrunk together to fit, or as many as the smallest size allows |
+| `plants garden` | random plants side by side, filling the row: at real size when at least three fit, otherwise all shrunk together until three do |
+| `plants garden 8` | eight plants, at the biggest size where eight fit, or as many as the smallest size allows |
 | `plants reset` | puts the terminal's colours back to normal |
 | `plants classic` | (PowerShell) the first, small version of the row |
 

@@ -5,16 +5,14 @@
 Run it once after cloning (and again after adding plants with from_image.py). It:
   1. draws the original plants (make_big.py) and the classic row (make_banner.py), keeping any
      plant you already have in out/
-  2. makes 75/60/50/40 percent copies (make_small.py), if Pillow is installed
+  2. makes 75/60/50/40 percent copies (make_small.py)
   3. makes 2x and 3x copies (make_scaled.py)
   4. writes a colour theme per banner (make_themes.py)
   5. writes bash/build/, the bundle the bash version installs from (make_bash.py)
 
-Only step 2 needs Pillow (pip install pillow). Without it everything else still works: plants are
-just never shown smaller than their real size.
+Needs nothing beyond Python 3. If Pillow is installed, step 2 uses its (slightly smoother) resize.
 """
 import glob
-import importlib.util
 import os
 import shutil
 import subprocess
@@ -46,11 +44,8 @@ def main():
         shutil.rmtree(keep, ignore_errors=True)
 
     run("make_banner.py")     # `plants classic`
-    if importlib.util.find_spec("PIL"):
-        for factor in ("0.75", "0.6", "0.5", "0.4"):
-            run("make_small.py", "--factor", factor)
-    else:
-        print("-- Pillow is not installed: skipping the smaller copies (pip install pillow to add them)")
+    for factor in ("0.75", "0.6", "0.5", "0.4"):   # uses Pillow when installed, plain Python otherwise
+        run("make_small.py", "--factor", factor)
     run("make_scaled.py")
     run("make_themes.py")
     run("make_bash.py")

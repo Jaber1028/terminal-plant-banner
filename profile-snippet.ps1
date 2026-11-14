@@ -1,6 +1,6 @@
 # Garden plant banner on terminal start. Art lives in ~/.config/pvz-banner/out (build.py makes it).
 #   plants               one big plant, picked at random
-#   plants garden        random plants at full size across the window; "plants garden 8" asks for eight
+#   plants garden        random plants across the window (three or more); "plants garden 8" asks for eight
 #   plants classic       the small original row
 #   plants peashooter    or any other plant; "plants list" shows the names
 # $PlantsOnStart sets what a new terminal shows: random, garden, classic, a plant name, or off.
@@ -72,27 +72,17 @@ function plants {
                 }
                 , $row
             }
-            $picks = & $pack 'big'   # the plants' real pixels, never shrunk: as many as fit
-            if ($Count -gt 0 -and $Count -lt $picks.Count) {
-                # asked for fewer than fit: just that many
-                $picks = & $pack 'big' $Count
-            }
-            elseif ($Count -gt $picks.Count) {
-                # asked for more than fit at real size: shrink them all together until that many fit;
-                # if even the smallest size can't hold that many, show as many as it can
-                $best = $picks
-                foreach ($kind in 's75', 's60', 's50', 's40') {
-                    $row = & $pack $kind $Count
-                    if ($row.Count -gt $best.Count) { $best = $row }
-                    if ($row.Count -ge $Count) { break }
-                }
-                $picks = $best
-            }
-            if ($picks.Count -eq 0) {   # only when not even one fits at real size: the biggest shrink that holds one
-                foreach ($kind in 's75', 's60', 's50', 's40') {
-                    $picks = & $pack $kind
-                    if ($picks.Count -ge 1) { break }
-                }
+            # Real pixels while enough plants fit (three, or the number asked for); otherwise every
+            # plant is shrunk by the same amount, a step at a time, until enough fit. Each try fills
+            # the row (or takes the number asked for). If no size holds enough, the try with the most
+            # plants wins.
+            $want = if ($Count -gt 0) { $Count } else { 999 }
+            $enough = if ($Count -gt 0) { $Count } else { 3 }
+            $picks = @()
+            foreach ($kind in 'big', 's75', 's60', 's50', 's40') {
+                $row = & $pack $kind $want
+                if ($row.Count -gt $picks.Count) { $picks = $row }
+                if ($row.Count -ge $enough) { break }
             }
             if ($picks.Count -eq 0) { return }   # window too small for any plant
             $tall = ($picks | ForEach-Object { $_.Lines.Count } | Measure-Object -Maximum).Maximum

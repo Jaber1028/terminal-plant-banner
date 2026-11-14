@@ -79,24 +79,16 @@ _plants_garden() {
     local count=$1 width=$2 room=$3 kind best=() tall=0 key i
     mapfile -t _PLANTS_SHUFFLED < <(_plants_names | _plants_shuffle)
     (( ${#_PLANTS_SHUFFLED[@]} )) || { echo "plants: no plants installed" >&2; return 1; }
-    _plants_pack big 9999 "$width" "$room"                     # real pixels, as many as fit
-    if (( count > 0 && count < ${#_PLANTS_ROW[@]} )); then
-        _plants_pack big "$count" "$width" "$room"            # asked for fewer: just that many
-    elif (( count > ${#_PLANTS_ROW[@]} )); then
-        best=("${_PLANTS_ROW[@]}")                               # asked for more: shrink together
-        for kind in s75 s60 s50 s40; do
-            _plants_pack "$kind" "$count" "$width" "$room"
-            (( ${#_PLANTS_ROW[@]} > ${#best[@]} )) && best=("${_PLANTS_ROW[@]}")
-            (( ${#_PLANTS_ROW[@]} >= count )) && break
-        done
-        _PLANTS_ROW=("${best[@]}")
-    fi
-    if (( ${#_PLANTS_ROW[@]} == 0 )); then                      # not even one fits at real size
-        for kind in s75 s60 s50 s40; do
-            _plants_pack "$kind" 9999 "$width" "$room"
-            (( ${#_PLANTS_ROW[@]} )) && break
-        done
-    fi
+    # Real pixels while enough plants fit (three, or the number asked for); otherwise every plant
+    # is shrunk by the same amount, a step at a time, until enough fit. Each try fills the row (or
+    # takes the number asked for). If no size holds enough, the try with the most plants wins.
+    local want=$(( count > 0 ? count : 9999 )) enough=$(( count > 0 ? count : 3 ))
+    for kind in big s75 s60 s50 s40; do
+        _plants_pack "$kind" "$want" "$width" "$room"
+        (( ${#_PLANTS_ROW[@]} > ${#best[@]} )) && best=("${_PLANTS_ROW[@]}")
+        (( ${#_PLANTS_ROW[@]} >= enough )) && break
+    done
+    _PLANTS_ROW=("${best[@]}")
     (( ${#_PLANTS_ROW[@]} )) || return 0                         # window too small for any plant
 
     for key in "${_PLANTS_ROW[@]}"; do (( _PLANTS_H[$key] > tall )) && tall=${_PLANTS_H[$key]}; done
