@@ -1,11 +1,15 @@
 #!/usr/bin/env bash
 # Runs plants.sh at many window sizes and checks no row is wider or taller than the window.
-#   bash test.sh [folder holding plants.sh, art/ and index.tsv]
-PLANTS_DIR=${1:-$HOME/.config/pvz-banner}
+#   bash test.sh [folder holding plants.sh, art/ and index.tsv; default: the folder this file is in]
+PLANTS_DIR=${1:-$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)}
 . "$PLANTS_DIR/plants.sh"
 # measuring needs a UTF-8 locale; take whichever one this system has
-if [[ ${LC_ALL:-${LANG:-}} != *[Uu][Tt][Ff]* ]]; then
-    utf=$(locale -a 2>/dev/null | grep -i -m1 -E '^(C|en_US)\.utf-?8$') && export LC_ALL=$utf
+if [[ ${LC_ALL:-${LC_CTYPE:-${LANG:-}}} != *[Uu][Tt][Ff]* ]]; then
+    utf=$(locale -a 2>/dev/null | grep -i -m1 -E '\.utf-?8$') && export LC_ALL=$utf
+fi
+if [[ ${LC_ALL:-${LC_CTYPE:-${LANG:-}}} != *[Uu][Tt][Ff]* ]]; then
+    echo "test.sh: no UTF-8 locale found, so widths can't be measured; nothing tested" >&2
+    exit 1
 fi
 esc=$'\033'
 # colour codes and the theme's OSC codes out; a literal ESC keeps this portable to BSD sed

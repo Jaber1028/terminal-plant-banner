@@ -12,7 +12,14 @@
 # PLANTS_THEME=0 stops the tab being tinted to match the plant.
 # PLANTS_COLS / PLANTS_ROWS pretend the window is that big (for testing).
 
-PLANTS_DIR="${PLANTS_DIR:-$HOME/.config/pvz-banner}"
+# Older bash (macOS ships 3.2) lacks what this needs: say so once, instead of failing at every start.
+if (( BASH_VERSINFO[0] < 4 || (BASH_VERSINFO[0] == 4 && BASH_VERSINFO[1] < 2) )); then
+    plants() { echo "plants: needs bash 4.2 or newer (this is $BASH_VERSION)" >&2; return 1; }
+    return 0 2>/dev/null || exit 0
+fi
+
+# the art sits next to this file unless told otherwise
+PLANTS_DIR="${PLANTS_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)}"
 PLANTS_THEME="${PLANTS_THEME:-1}"
 
 # width and height of every banner, keyed "kind-name"
@@ -20,7 +27,10 @@ declare -gA _PLANTS_W=() _PLANTS_H=()
 
 _plants_shuffle() {   # shuf where it exists (GNU coreutils), otherwise a random sort in awk
     if command -v shuf >/dev/null 2>&1; then shuf "$@"
-    else awk 'BEGIN { srand() } { print rand() "\t" $0 }' | sort -n | cut -f2- | { if [[ $1 == -n ]]; then head -n "$2"; else cat; fi; }
+    else
+        # seeded from bash's $RANDOM and the process id: awk's own srand() only changes once a second
+        awk -v seed="$RANDOM$$" 'BEGIN { srand(seed) } { print rand() "\t" $0 }' | sort -n | cut -f2- |
+            { if [[ ${1:-} == -n ]]; then head -n "$2"; else cat; fi; }
     fi
 }
 
@@ -68,6 +78,7 @@ _plants_pack() {
 _plants_garden() {
     local count=$1 width=$2 room=$3 kind best=() tall=0 key i
     mapfile -t _PLANTS_SHUFFLED < <(_plants_names | _plants_shuffle)
+    (( ${#_PLANTS_SHUFFLED[@]} )) || { echo "plants: no plants installed" >&2; return 1; }
     _plants_pack big 9999 "$width" "$room"                     # real pixels, as many as fit
     if (( count > 0 && count < ${#_PLANTS_ROW[@]} )); then
         _plants_pack big "$count" "$width" "$room"            # asked for fewer: just that many

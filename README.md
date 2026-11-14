@@ -33,12 +33,41 @@ from the banner files with `render_ans.py`.
 Banners converted from other people's artwork are deliberately not part of this repository.
 Bring your own pictures.
 
-## Install: PowerShell (7+, any OS)
+Both versions need Python 3 once, to build the banners. Pillow (`pip install pillow`) is
+optional: without it plants are never drawn smaller than their real size.
 
-1. Clone this repository to `~/.config/pvz-banner` (the snippet expects that path):
+## Install: bash on Linux, macOS or any Unix-like system
+
+```bash
+git clone <this repository's URL> pvz-banner
+cd pvz-banner
+bash install.sh
+```
+
+`install.sh` runs `build.py` (every size, a colour theme per banner, and the bash bundle in
+`bash/build/`), then installs it for you: the art goes to `~/.local/share/pvz-banner/` and one
+marked block goes into `~/.bashrc`, and into `~/.bash_profile` too where login shells don't read
+`~/.bashrc` (as on macOS). Running it again updates both. To uninstall, delete the block (from
+`# pvz-banner start` to `# pvz-banner end`) and that folder.
+
+A plant shows once per terminal session: in a new local terminal, or when you ssh in. It only
+draws in an interactive shell on a real terminal at least 60 columns wide, so `ssh host command`,
+scp, rsync and cron never see it, and shells started inside the session don't repeat it. The
+terminal's colours are put back when the session ends.
+
+Needs bash 4.2+ (macOS ships 3.2: `brew install bash` and make it your shell), `tput` and `paste`.
+`shuf` is used when there; without it a random sort in `awk` does the same job. To install on a
+machine without Python, build on another one and copy `bash/build/` over, then run its
+`install.sh`. `bash test.sh` in the installed folder checks every view fits several window sizes.
+
+## Install: PowerShell 7+ on any OS
+
+1. Clone this repository to `~/.config/pvz-banner` (the snippet expects that path) and build:
 
    ```powershell
    git clone <this repository's URL> "$HOME/.config/pvz-banner"
+   cd "$HOME/.config/pvz-banner"
+   python build.py        # or python3 build.py
    ```
 
 2. Append `profile-snippet.ps1` to your PowerShell profile:
@@ -47,21 +76,10 @@ Bring your own pictures.
    Get-Content "$HOME/.config/pvz-banner/profile-snippet.ps1" | Add-Content $PROFILE
    ```
 
-3. Open a new terminal.
+3. Open a new terminal. `pwsh -NoProfile -File ps-test.ps1` checks every view fits several
+   window sizes.
 
-## Install: bash (4.2+, any Unix-like system)
-
-1. Build the bundle where the banners are: `python3 make_bash.py`. It writes `bash/build/` with
-   `plants.sh`, the art, an index of sizes, `install.sh` and `test.sh`.
-2. Copy `bash/build/` to the machine and run `bash install.sh` there.
-
-The installer copies everything to `~/.config/pvz-banner/` and adds a block to `~/.bashrc`
-(backing it up first). The plant is drawn once per session, only in an interactive shell on a
-real terminal, so `ssh host command`, scp, rsync and cron never see it. It also works where ssh
-starts a plain interactive shell rather than a login shell. The terminal's colours are put back
-when the session ends. `bash test.sh` checks the output fits at several window sizes.
-
-Needs `tput` and `paste`; uses `shuf` when it is there and falls back to `awk` when it isn't.
+After adding plants of your own (below), run `build.py` again (and `install.sh` for bash).
 
 ## Commands
 
@@ -89,7 +107,7 @@ Needs Python 3 and Pillow (`pip install pillow`). Pixel art on a plain backgroun
 
 ```
 python3 from_image.py <picture> <name>
-python3 make_themes.py
+python3 build.py
 ```
 
 Useful options for `from_image.py`:

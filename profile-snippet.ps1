@@ -11,6 +11,7 @@ function plants {
     # plants garden 8: ask for 8 plants (see the garden below). -Columns/-Rows: pretend the window is this big.
     param([string]$Which = 'random', [int]$Count = 0, [int]$Columns = 0, [int]$Rows = 0)
     $dir = "$HOME/.config/pvz-banner"
+    $picked = $null   # set when 'random' has already chosen a plant and its size
     # Sizes are in character cells, so a bigger or smaller font (fewer or more cells) is handled the
     # same way as a smaller or bigger window. The last column is never used: writing into it makes
     # the terminal wrap, which splits every row of the art in two.
@@ -46,7 +47,7 @@ function plants {
     if ($Which -eq 'random') {   # a random plant among those that fit this window; none fit, nothing shown
         foreach ($n in ((Get-ChildItem "$dir/out/big-*.ans" | Get-Random -Count 999).BaseName -replace '^big-')) {
             $f = & $fits $n
-            if ($f) { $Which = $n; break }
+            if ($f) { $Which = $n; $picked = $f; break }   # keep the size found: no second search
         }
         if (-not $f) { return }
     }
@@ -112,7 +113,7 @@ function plants {
         }
         'reset'   { Write-Host "`e]110`e\`e]111`e\`e]112`e\" -NoNewline; return }   # back to the terminal's own colours
         'list'    { Write-Host ((Get-ChildItem "$dir/out/big-*.ans").BaseName -replace '^big-' -join ', '); return }
-        default   { if (Test-Path "$dir/out/big-$Which.ans") { & $sized $Which } }
+        default   { if ($picked) { $picked } elseif (Test-Path "$dir/out/big-$Which.ans") { & $sized $Which } }
     }
     if ($file -and (Test-Path $file)) {
         # recolour this tab (background, text, cursor) to suit the plant, when it has a theme
@@ -122,7 +123,8 @@ function plants {
     }
     else { Write-Host "plants: nothing called '$Which'. Try random, garden, classic, or a name from 'plants list'." }
 }
-# Skipped for scripts, redirected output, Claude Code's own shells and windows under 60 columns.
+# Skipped for scripts, redirected output, shells run by coding agents (CLAUDECODE set) and windows
+# under 60 columns.
 if ($PlantsOnStart -ne 'off' -and [Environment]::UserInteractive -and -not [Console]::IsOutputRedirected -and -not $env:CLAUDECODE -and
     -not ([Environment]::GetCommandLineArgs() -match '^-(c|command|f|file|e|ec|enc|encodedcommand|noni|noninteractive)$') -and
     $Host.UI.RawUI.WindowSize.Width -ge 60) { plants $PlantsOnStart }

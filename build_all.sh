@@ -6,8 +6,11 @@
 cd "$(dirname "$0")" || exit 1
 extra="$1"
 # python3 on most systems, python where that is the only name (often on Windows)
-PY=$(command -v python3 || command -v python) || { echo "Python 3 not found" >&2; exit 1; }
-"$PY" -c 'import sys; sys.exit(sys.version_info < (3,))' 2>/dev/null || PY=$(command -v python)
+PY=""
+for p in python3 python; do   # the first that is really Python 3 (some "python3" are store stubs)
+    if command -v "$p" >/dev/null && "$p" -c 'import sys; sys.exit(sys.version_info < (3,))' 2>/dev/null; then PY=$p; break; fi
+done
+[[ -n $PY ]] || { echo "build_all.sh: Python 3 not found" >&2; exit 1; }
 # one sprite only, no ground shadow, near-identical shades merged, black outlines exactly as drawn;
 # --snap follows the picture's real pixel edges (art pixels land 3 or 4 picture pixels apart)
 common="--pitch 3.5 --snap --main --drop 97,94,89 --drop-tol 16 --merge 36"

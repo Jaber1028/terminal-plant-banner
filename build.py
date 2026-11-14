@@ -30,16 +30,18 @@ def run(script, *args):
 
 def main():
     os.makedirs(out, exist_ok=True)
-    # make_big.py writes its plants straight into out/; draw them into a scratch folder first
-    # so a plant you converted yourself under the same name is never overwritten
+    # make_big.py writes its plants straight into out/; set aside the ones already there and put
+    # them back afterwards (even if it fails), so a plant you converted under the same name stays
     have = {os.path.basename(p) for p in glob.glob(os.path.join(out, "big-*.ans"))}
     keep = tempfile.mkdtemp()
-    for name in have:
-        shutil.copy2(os.path.join(out, name), keep)
-    run("make_big.py")
-    for name in have:
-        shutil.copy2(os.path.join(keep, name), out)
-    shutil.rmtree(keep, ignore_errors=True)
+    try:
+        for name in have:
+            shutil.copy2(os.path.join(out, name), keep)
+        run("make_big.py")
+    finally:
+        for name in have:
+            shutil.copy2(os.path.join(keep, name), out)
+        shutil.rmtree(keep, ignore_errors=True)
 
     try:
         import PIL  # noqa: F401
