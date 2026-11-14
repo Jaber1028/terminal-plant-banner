@@ -99,11 +99,16 @@ def text(grid):
     return "\n".join(lines) + "\n"
 
 
-count = 0
-for path in sorted(glob.glob(os.path.join(here, "out", "big-*.ans"))):
-    small = (shrink if "--blocks" in sys.argv else shrink_smooth)(cells(path))
-    name = os.path.basename(path).replace("big-", f"small{WIDTH}-")
-    with open(os.path.join(here, "out", name), "w", encoding="utf-8", newline="\n") as f:
-        f.write(text(small))
-    count += 1
-print(f"{count} small plants written, each at most {WIDTH} columns by {HEIGHT // 2} lines")
+def main():
+    count = 0
+    for path in sorted(glob.glob(os.path.join(here, "out", "big-*.ans"))):
+        small = (shrink if "--blocks" in sys.argv else shrink_smooth)(cells(path))
+        name = os.path.basename(path).replace("big-", f"small{WIDTH}-")
+        with open(os.path.join(here, "out", name), "w", encoding="utf-8", newline="\n") as f:
+            f.write(text(small))
+        count += 1
+    print(f"{count} small plants written, each at most {WIDTH} columns by {HEIGHT // 2} lines")
+
+
+if __name__ == "__main__":
+    main()

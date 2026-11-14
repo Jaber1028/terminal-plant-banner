@@ -8,18 +8,26 @@ $PlantsOnStart = 'random'
 # $PlantsTheme: recolour the tab to match the plant shown. "plants reset" restores the normal colours.
 $PlantsTheme = $true
 function plants {
-    param([string]$Which = 'random', [int]$Columns = 0)   # -Columns: pretend the window is this wide
+    param([string]$Which = 'random', [int]$Columns = 0, [int]$Rows = 0)   # -Columns/-Rows: pretend the window is this big
     $dir = "$HOME\.config\pvz-banner"
     $width = if ($Columns) { $Columns } else { $Host.UI.RawUI.WindowSize.Width }
-    $file = switch ($Which) {
-        'random'  {   # only plants short enough for this window, so a tall one never scrolls its top away
-            $room = $Host.UI.RawUI.WindowSize.Height - 2
-            $fits = Get-ChildItem "$dir\out\big-*.ans" | Where-Object { [IO.File]::ReadAllLines($_.FullName).Count -le $room }
-            if (-not $fits) { $fits = Get-ChildItem "$dir\out\big-*.ans" }
-            ($fits | Get-Random).FullName
+    $height = if ($Rows) { $Rows } else { $Host.UI.RawUI.WindowSize.Height }
+    # One plant is drawn at the biggest size that fits the window: double, normal, then the small sizes.
+    $sized = {
+        param($name)
+        foreach ($kind in 'double', 'big', 'small40', 'small30', 'small20') {
+            $f = "$dir\out\$kind-$name.ans"
+            if (-not (Test-Path $f)) { continue }
+            $lines = [IO.File]::ReadAllLines($f)
+            $w = ($lines | ForEach-Object { ($_ -replace "`e\[[0-9;]*m", '').TrimEnd().Length } | Measure-Object -Maximum).Maximum
+            if ($w -le $width -and $lines.Count -le $height - 2) { return $f }
         }
+        "$dir\out\small20-$name.ans"
+    }
+    if ($Which -eq 'random') { $Which = (Get-ChildItem "$dir\out\big-*.ans" | Get-Random).BaseName -replace '^big-' }
+    $file = switch ($Which) {
         'garden'  {   # 5 random small plants side by side (about the room of two big ones), one baseline
-            $room = $Host.UI.RawUI.WindowSize.Height - 2
+            $room = $height - 2
             $picks = @(); $used = 0
             # the biggest size at which five fit this window: 40, 30 or 20 columns each
             $size = foreach ($s in 40, 30, 20) { if (5 * $s + 4 -le $width) { $s; break } }
@@ -45,7 +53,7 @@ function plants {
         'classic' { "$dir\saved\small-row\banner.ans" }
         'reset'   { Write-Host "`e]110`e\`e]111`e\`e]112`e\" -NoNewline; return }   # back to the terminal's own colours
         'list'    { Write-Host ((Get-ChildItem "$dir\out\big-*.ans").BaseName -replace '^big-' -join ', '); return }
-        default   { "$dir\out\big-$Which.ans" }
+        default   { if (Test-Path "$dir\out\big-$Which.ans") { & $sized $Which } }
     }
     if ($file -and (Test-Path $file)) {
         # recolour this tab (background, text, cursor) to suit the plant, when it has a theme

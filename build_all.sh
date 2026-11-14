@@ -24,4 +24,5 @@ for name in tanglekelp; do
 done
 [ "$extra" = "--png" ] && python sheet.py
 for s in "20 28" "30 42" "40 56"; do set -- $s; python make_small.py --width $1 --height $2; done   # sizes for `plants garden`
+python make_double.py   # double size for big windows
 python make_themes.py
