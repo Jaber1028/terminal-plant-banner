@@ -133,7 +133,7 @@ def guess_pitch(img, box):
 
 def main():
     src, name = sys.argv[1], sys.argv[2]
-    tol, colors = arg("--tol", 60), arg("--colors", 40)
+    tol = arg("--tol", 60)
     img = Image.open(src).convert("RGB")
     if "--crop" in sys.argv:                 # left,top,right,bottom in picture pixels
         img = img.crop(tuple(int(v) for v in arg("--crop", "").split(",")))

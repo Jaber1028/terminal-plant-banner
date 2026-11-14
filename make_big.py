@@ -396,7 +396,6 @@ def render(grid, captions):
             else:
                 out.append(fg(top) + bg(bottom) + "▀")
         lines.append("".join(out) + reset)
-    width = len(grid[0]) + 2 * MARGIN
     lines.append("")
     return "\n".join(lines) + "\n"
 

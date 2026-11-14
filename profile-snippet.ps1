@@ -1,4 +1,4 @@
-# Garden plant banner on terminal start. Art lives in ~/.config/pvz-banner (make_big.py rebuilds it).
+# Garden plant banner on terminal start. Art lives in ~/.config/pvz-banner/out (build.py makes it).
 #   plants               one big plant, picked at random
 #   plants garden        random plants at full size across the window; "plants garden 8" asks for eight
 #   plants classic       the small original row
@@ -109,7 +109,7 @@ function plants {
             Write-Host ("`n" + ($out -join "`n") + "`n"); return
         }
         'classic' {   # the first, fixed-size row; a garden instead when the window is too narrow for it
-            if ($width -ge 96) { "$dir/saved/small-row/banner.ans" } else { plants garden -Columns ($width + 1) -Rows $height; return }
+            if ($width -ge 96) { "$dir/out/classic.ans" } else { plants garden -Columns ($width + 1) -Rows $height; return }
         }
         'reset'   { Write-Host "`e]110`e\`e]111`e\`e]112`e\" -NoNewline; return }   # back to the terminal's own colours
         'list'    { Write-Host ((Get-ChildItem "$dir/out/big-*.ans").BaseName -replace '^big-' -join ', '); return }

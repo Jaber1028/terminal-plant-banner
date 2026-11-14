@@ -68,12 +68,8 @@ draw = ImageDraw.Draw(index)
 for n, (x0, y0, x1, y1, count) in enumerate(boxes, 1):
     pad = 8
     crop = Image.new("RGB", (x1 - x0 + 2 * pad, y1 - y0 + 2 * pad), ground)
+    # bits of neighbouring sprites inside this box stay; from_image.py --main keeps only the biggest
     crop.paste(img.crop((x0, y0, x1, y1)), (pad, pad))
-    # wipe pixels of neighbouring sprites that fall inside this box
-    cp = crop.load()
-    for y in range(y0, y1):
-        for x in range(x0, x1):
-            pass
     crop.save(os.path.join(out, f"{n:02d}.png"))
     draw.rectangle((x0, y0, x1, y1), outline=(255, 0, 0))
     draw.rectangle((x0, y0, x0 + 26, y0 + 18), fill=(0, 0, 0))

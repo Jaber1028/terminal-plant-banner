@@ -12,26 +12,30 @@ modern terminals do).
 
 ## Gallery
 
-All 50 plants in the rotation, as they show in the terminal (one is picked at random each time):
+A set of 50 plants, as they show in the terminal (one is picked at random each time):
 
-![All 50 plants in the rotation](docs/plants.png)
+![50 pixel-art plants](docs/plants.png)
 
-All but one are converted from [TomcArts01's pixel art](https://www.newgrounds.com/art/view/tomcarts01/pvz-all-plants-pixel-art)
-(see Credits); the purple mushroom is drawn by `make_big.py`. The image is rendered straight
-from the banner files with `render_ans.py`.
+These were converted with `from_image.py` from [TomcArts01's pixel art](https://www.newgrounds.com/art/view/tomcarts01/pvz-all-plants-pixel-art)
+(see Credits), which is not included here. Out of the box you get the five plants `make_big.py`
+draws itself (peashooter, repeater, wall-nut, potato mine and a mushroom) and the classic row;
+add your own from any pixel art.
 
 ## What's included
 
-- Original plants drawn from shapes by `make_big.py` (run it to create them in `out/`; the
-  purple mushroom is included ready-made).
-- `from_image.py`, which turns any pixel-art picture into a banner, and `split_sheet.py`, which
-  cuts a sprite sheet into one picture per sprite, so you can add your own.
-- `make_small.py` and `make_scaled.py` (smaller and 2x/3x copies), `make_themes.py` (a matching
-  colour theme per banner), `make_bash.py` (the bundle for the bash version).
-- `profile-snippet.ps1`, the PowerShell version, and `bash/`, the bash version.
-
-Banners converted from other people's artwork are deliberately not part of this repository.
-Bring your own pictures.
+| File | What it does |
+|---|---|
+| `install.sh` | one-step install of the bash version on Linux, macOS or any Unix-like system |
+| `build.py` | builds every size, theme and the bash bundle into `out/` and `bash/build/` |
+| `profile-snippet.ps1` | the PowerShell version |
+| `bash/` | the bash version (`plants.sh`), its installer and its test |
+| `from_image.py` | turns a pixel-art picture into a banner |
+| `split_sheet.py` | cuts a sprite sheet into one picture per sprite, numbered for naming |
+| `make_big.py`, `make_banner.py` | the plants drawn in code, and the classic row |
+| `make_small.py`, `make_scaled.py` | the smaller copies and the 2x/3x copies |
+| `make_themes.py`, `make_bash.py` | a colour theme per banner; the bash bundle |
+| `render_ans.py`, `sheet.py` | draw banners as PNG images, and put check images side by side |
+| `ps-test.ps1`, `bash/test.sh` | check every view fits a range of window sizes |
 
 Both versions need Python 3 once, to build the banners. Pillow (`pip install pillow`) is
 optional: without it plants are never drawn smaller than their real size.
@@ -125,7 +129,11 @@ Useful options for `from_image.py`:
 | `--lift-dark 62` | turn the black outer outline itself to slate |
 | `--png` | also write `check-<name>.png` to inspect the result |
 
-`build_all.sh` shows the options used for a larger set and rebuilds everything at once.
+For a whole sprite sheet: `python3 split_sheet.py <sheet>` cuts it into `refs/sheet/NN.png` and
+writes `refs/sheet/index.png` with each sprite's number on it; convert each piece with
+`from_image.py`. A sheet of screenshotted pixel art usually needs `--snap --main --merge 36` and
+a `--pitch` matching its pixel size. The files go in `out/` as `big-<name>.ans`; `build.py` makes
+the rest.
 
 ## Credits
 
@@ -143,3 +151,8 @@ an unofficial fan project with no connection to them.
   that don't support them ignore them; the art still draws.
 - On start-up the banner is skipped for scripts, redirected output and windows narrower than
   60 columns.
+
+## Licence
+
+The code is under the MIT licence (see `LICENSE`). The licence doesn't cover the reference pixel
+art credited above or the Plants vs. Zombies characters.

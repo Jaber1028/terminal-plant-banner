@@ -1,8 +1,9 @@
-"""Builds banner.ans: a row of pixel-art garden plants in truecolor half-blocks.
+"""Builds out/classic.ans (`plants classic`): the first version, a small row of pixel-art
+garden plants with their names. build.py runs it.
 
 Edit the sprites or palette below, then run:
-    python make_banner.py            (writes banner.ans next to this file)
-    python make_banner.py --png      (also writes preview.png, needs Pillow)
+    python3 make_banner.py            (writes out/classic.ans)
+    python3 make_banner.py --png      (also writes preview.png, needs Pillow)
 
 Each sprite is 16 rows of 16 characters; '.' is see-through.
 Two pixel rows become one terminal row, so a sprite is 8 lines tall.
@@ -215,11 +216,12 @@ def main():
     check()
     here = os.path.dirname(os.path.abspath(__file__))
     grid = canvas()
-    with open(os.path.join(here, "banner.ans"), "w", encoding="utf-8", newline="\n") as f:
+    os.makedirs(os.path.join(here, "out"), exist_ok=True)
+    with open(os.path.join(here, "out", "classic.ans"), "w", encoding="utf-8", newline="\n") as f:
         f.write(render(grid))
     if "--png" in sys.argv:
         preview(grid, os.path.join(here, "preview.png"))
-    print(f"banner.ans written: {len(grid[0]) + MARGIN} columns wide")
+    print(f"out/classic.ans written: {len(grid[0]) + MARGIN} columns wide")
 
 
 if __name__ == "__main__":

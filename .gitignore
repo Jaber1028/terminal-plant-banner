@@ -1,15 +1,18 @@
-# Reference pictures and the banners converted from them are other artists' work: not published.
-refs/
-out/*
-# The plants drawn by make_big.py are original and are included ready-made.
-!out/big-mushroom.*
+# Everything in out/ and bash/build/ is generated: run build.py (or install.sh).
+out/
+bash/build/
+bash/*.tar.gz
 
+# Reference pictures are other artists' work and are not published; bring your own.
+refs/
+
+# A personal build script that rebuilds from a private set of reference pictures.
+build_all.sh
+saved/
+
+# Check images and caches
 __pycache__/
 preview.png
 check-*.png
 sheet.png
-!out/s[0-9][0-9]-mushroom.*
-!out/x?-mushroom.*
 banner.ans
-bash/build/
-bash/*.tar.gz

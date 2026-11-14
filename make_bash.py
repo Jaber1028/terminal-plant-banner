@@ -26,6 +26,8 @@ kinds = ("x3", "x2", "big", "s75", "s60", "s50", "s40")
 rows = []
 for path in sorted(glob.glob(os.path.join(here, "out", "*.ans"))):
     base = os.path.basename(path)[:-4]
+    if "-" not in base:          # e.g. classic.ans: PowerShell only
+        continue
     kind, name = base.split("-", 1)
     if kind not in kinds:
         continue
