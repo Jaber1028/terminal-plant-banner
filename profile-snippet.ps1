@@ -7,9 +7,6 @@
 $PlantsOnStart = 'random'
 # $PlantsTheme: recolour the tab to match the plant shown. "plants reset" restores the normal colours.
 $PlantsTheme = $true
-# $PlantsGarden: 'quality' shows the plants' real pixels, as many as fit across the window;
-# 'quantity' always shows five, all shrunk by the same amount to fit.
-$PlantsGarden = 'quality'
 function plants {
     param([string]$Which = 'random', [int]$Columns = 0, [int]$Rows = 0)   # -Columns/-Rows: pretend the window is this big
     $dir = "$HOME\.config\pvz-banner"
@@ -62,24 +59,14 @@ function plants {
                 }
                 , $row
             }
-            $picks = @()
-            if ($PlantsGarden -eq 'quantity') {
-                # exactly five, at the biggest shared shrink where five fit
-                foreach ($kind in 'big', 's75', 's60', 's50', 's40') {
-                    $picks = & $pack $kind 5
-                    if ($picks.Count -ge 5) { break }
-                }
-            } else {
-                $picks = & $pack 'big'   # quality: the plants' real pixels, never shrunk
-            }
-            if ($picks.Count -eq 0) {   # nothing fits at real size: the biggest shrink that holds any
+            $picks = & $pack 'big'   # the plants' real pixels, never shrunk
+            if ($picks.Count -eq 0) {   # only when not even one fits at real size: the biggest shrink that holds one
                 foreach ($kind in 's75', 's60', 's50', 's40') {
                     $picks = & $pack $kind
                     if ($picks.Count -ge 1) { break }
                 }
             }
             if ($picks.Count -eq 0) { $picks = @(& $load "$dir\out\s40-$($all[0]).ans") }
-            if (-not $picks) { $picks = @(& $load "$dir\out\s40-$($all[0]).ans") }
             $tall = ($picks | ForEach-Object { $_.Lines.Count } | Measure-Object -Maximum).Maximum
             $out = for ($r = 0; $r -lt $tall; $r++) {
                 $row = for ($p = 0; $p -lt $picks.Count; $p++) {

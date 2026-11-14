@@ -49,12 +49,11 @@ Bring your own pictures.
 | `plants` | one plant at random, as big as the window allows (3x, 2x, normal or smaller) |
 | `plants <name>` | a specific plant |
 | `plants list` | the names available |
-| `plants garden` | five random plants side by side, at the biggest size that fits the window |
+| `plants garden` | random plants side by side at their real pixels, until the row is full |
 | `plants classic` | the first, small version of the row |
 | `plants reset` | puts the tab's colours back to normal |
 
-In the profile snippet, `$PlantsGarden` is `quality` (real pixels, filling the row until the window or the list runs out) or `quantity` (always
-five, all shrunk by the same amount), and `$PlantsOnStart` sets what a new terminal shows (`random`, `garden`,
+In the profile snippet, `$PlantsOnStart` sets what a new terminal shows (`random`, `garden`,
 `classic`, a plant name, or `off`) and `$PlantsTheme` turns the tab tinting on or off.
 
 ## Adding a plant from a picture
