@@ -1,0 +1,16 @@
+# Reference pictures and the banners converted from them are other artists' work: not published.
+refs/
+out/*
+# The plants drawn by make_big.py are original and are included ready-made.
+!out/big-peashooter.*
+!out/big-wallnut.*
+!out/big-repeater.*
+!out/big-potatomine.*
+!out/big-mushroom.*
+!out/garden-*.ans
+!out/garden-*.theme
+
+__pycache__/
+preview.png
+check-*.png
+sheet.png
