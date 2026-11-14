@@ -48,7 +48,7 @@ Bring your own pictures.
 | `plants` | one plant, picked at random from those that fit the window |
 | `plants <name>` | a specific plant |
 | `plants list` | the names available |
-| `plants garden` | a row of small plants at double size |
+| `plants garden` | five random plants at small size, side by side |
 | `plants classic` | the first, small version of the row |
 | `plants reset` | puts the tab's colours back to normal |
 

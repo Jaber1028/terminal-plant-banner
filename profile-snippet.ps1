@@ -18,10 +18,11 @@ function plants {
             if (-not $fits) { $fits = Get-ChildItem "$dir\out\big-*.ans" }
             ($fits | Get-Random).FullName
         }
-        'garden'  {   # random current plants side by side, as many as fit the window, sharing one baseline
+        'garden'  {   # 5 random small plants side by side (about the room of two big ones), one baseline
             $room = $Host.UI.RawUI.WindowSize.Height - 2
             $picks = @(); $used = 0
-            foreach ($f in (Get-ChildItem "$dir\out\big-*.ans" | Get-Random -Count 99)) {
+            foreach ($f in (Get-ChildItem "$dir\out\small-*.ans" | Get-Random -Count 99)) {
+                if ($picks.Count -ge 5) { break }
                 $lines = [IO.File]::ReadAllLines($f.FullName) | Where-Object { ($_ -replace "`e\[[0-9;]*m", '').Trim() }
                 if ($lines.Count -gt $room) { continue }
                 $w = ($lines | ForEach-Object { ($_ -replace "`e\[[0-9;]*m", '').Length } | Measure-Object -Maximum).Maximum

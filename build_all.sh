@@ -23,4 +23,5 @@ for name in tanglekelp; do
     python from_image.py "refs/$name.png" "$name" --pitch 3.5 $common $extra
 done
 [ "$extra" = "--png" ] && python sheet.py
+python make_small.py    # small versions for `plants garden`
 python make_themes.py
