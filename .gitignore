@@ -1,12 +1,14 @@
-# Everything in out/ and bash/build/ is generated: run build.py (or install.sh).
-out/
+# The plants themselves (out/big-*.ans) are in the repository; every other size, the themes and
+# bash/build/ are made from them by build.py (or install.sh).
+out/*
+!out/big-*.ans
 bash/build/
 bash/*.tar.gz
 
-# Reference pictures are other artists' work and are not published; bring your own.
+# Reference pictures used to convert the plants
 refs/
 
-# A personal build script that rebuilds from a private set of reference pictures.
+# A personal build script that rebuilds from the reference pictures
 build_all.sh
 saved/
 

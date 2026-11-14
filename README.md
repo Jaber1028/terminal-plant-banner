@@ -16,10 +16,10 @@ A set of 50 plants, as they show in the terminal (one is picked at random each t
 
 ![50 pixel-art plants](docs/plants.png)
 
-These were converted with `from_image.py` from [TomcArts01's pixel art](https://www.newgrounds.com/art/view/tomcarts01/pvz-all-plants-pixel-art)
-(see Credits), which is not included here. Out of the box you get the five plants `make_big.py`
-draws itself (peashooter, repeater, wall-nut, potato mine and a mushroom) and the classic row;
-add your own from any pixel art.
+All 50 come with the repository (`out/big-*.ans`). They were converted with `from_image.py` from
+[TomcArts01's pixel art](https://www.newgrounds.com/art/view/tomcarts01/pvz-all-plants-pixel-art)
+(see Credits), except the purple mushroom, which `make_big.py` draws. You can add your own from
+any pixel art.
 
 ## What's included
 
@@ -151,8 +151,7 @@ the rest.
 
 ## Credits
 
-The pixel art the converted plants come from (made with `from_image.py`; shown in the gallery,
-but the source pictures and banner files are not included here) is by [TomcArts01](https://tomcarts01.newgrounds.com/):
+The pixel art the plants were converted from (with `from_image.py`) is by [TomcArts01](https://tomcarts01.newgrounds.com/):
 [PvZ All Plants Pixel Art](https://www.newgrounds.com/art/view/tomcarts01/pvz-all-plants-pixel-art)
 on Newgrounds. Go look at the original.
 
@@ -165,8 +164,3 @@ an unofficial fan project with no connection to them.
   that don't support them ignore them; the art still draws.
 - On start-up the banner is skipped for scripts, redirected output and windows narrower than
   60 columns.
-
-## Licence
-
-The code is under the MIT licence (see `LICENSE`). The licence doesn't cover the reference pixel
-art credited above or the Plants vs. Zombies characters.
