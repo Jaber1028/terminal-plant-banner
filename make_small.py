@@ -1,17 +1,14 @@
-"""Shrinks every out/big-*.ans into out/small-*.ans for `plants garden`.
+"""Shrinks every out/big-<name>.ans by one shared factor into out/s<percent>-<name>.ans.
 
-Five small plants side by side take about the room of two big ones. Each is fitted into a box
-of WIDTH columns by HEIGHT pixels (two pixels per text line), keeping its proportions.
+    python make_small.py --factor 0.5      (writes out/s50-*.ans)
 
-    python make_small.py [--width 20] [--height 28]
-
-Shrinking pixel art by averaging blurs it, so each small pixel takes the commonest colour of
-the block it covers instead; dark outline pixels get a little extra weight so the edges survive.
+Every plant is shrunk by the same amount, so a garden keeps the plants' real sizes relative to
+each other. The shrink is a smooth resize whose pixels are then snapped back to the plant's own
+colours, so no new, muddy colours appear.
 """
 import glob
 import os
 import sys
-from collections import Counter
 
 from make_banner import fg, bg, ESC
 from render_ans import cells
@@ -23,39 +20,10 @@ def arg(flag, default):
     return type(default)(sys.argv[sys.argv.index(flag) + 1]) if flag in sys.argv else default
 
 
-WIDTH, HEIGHT = arg("--width", 20), arg("--height", 28)
-# --factor 0.5: shrink every plant by the same amount instead of fitting it into a box, so a
-# garden keeps the plants' real sizes relative to each other (out/s50-<name>.ans)
-FACTOR = arg("--factor", 0.0)
+FACTOR = arg("--factor", 0.5)
 
 
 def shrink(grid):
-    h = len(grid)
-    w = max(len(r) for r in grid)
-    grid = [r + [None] * (w - len(r)) for r in grid]
-    scale = FACTOR or min(WIDTH / w, HEIGHT / h, 1.0)
-    nw, nh = max(1, round(w * scale)), max(1, round(h * scale))
-    out = []
-    for y in range(nh):
-        y0, y1 = int(y * h / nh), max(int(y * h / nh) + 1, int((y + 1) * h / nh))
-        row = []
-        for x in range(nw):
-            x0, x1 = int(x * w / nw), max(int(x * w / nw) + 1, int((x + 1) * w / nw))
-            block = [grid[yy][xx] for yy in range(y0, y1) for xx in range(x0, x1)]
-            solid = [c for c in block if c]
-            if len(solid) * 2 < len(block):          # mostly see-through: leave it see-through
-                row.append(None)
-                continue
-            votes = Counter()
-            for c in solid:
-                votes[c] += 1.6 if max(c) < 90 else 1.0   # keep outlines and eyes
-            row.append(votes.most_common(1)[0][0])
-        out.append(row)
-    return out
-
-
-def shrink_smooth(grid):
-    """Smooth resize, then snap every pixel back to the plant's own colours (no new, muddy ones)."""
     from PIL import Image
     h = len(grid)
     w = max(len(r) for r in grid)
@@ -65,8 +33,7 @@ def shrink_smooth(grid):
             if c:
                 img.putpixel((x, y), c + (255,))
     palette = list({c for r in grid for c in r if c})
-    scale = FACTOR or min(WIDTH / w, HEIGHT / h, 1.0)
-    nw, nh = max(1, round(w * scale)), max(1, round(h * scale))
+    nw, nh = max(1, round(w * FACTOR)), max(1, round(h * FACTOR))
     # premultiplied so see-through pixels don't drag black into the edges
     small = img.convert("RGBa").resize((nw, nh), Image.Resampling.LANCZOS).convert("RGBA")
     out = []
@@ -104,13 +71,13 @@ def text(grid):
 
 def main():
     count = 0
+    tag = f"s{round(FACTOR * 100)}"
     for path in sorted(glob.glob(os.path.join(here, "out", "big-*.ans"))):
-        small = (shrink if "--blocks" in sys.argv else shrink_smooth)(cells(path))
-        name = os.path.basename(path).replace("big-", f"s{round(FACTOR * 100)}-" if FACTOR else f"small{WIDTH}-")
+        name = os.path.basename(path).replace("big-", f"{tag}-")
         with open(os.path.join(here, "out", name), "w", encoding="utf-8", newline="\n") as f:
-            f.write(text(small))
+            f.write(text(shrink(cells(path))))
         count += 1
-    print(f"{count} small plants written, each at most {WIDTH} columns by {HEIGHT // 2} lines")
+    print(f"{count} plants shrunk to {round(FACTOR * 100)}%")
 
 
 if __name__ == "__main__":

@@ -93,6 +93,24 @@ on Newgrounds. Go look at the original.
 The plants are characters from *Plants vs. Zombies* by PopCap Games / Electronic Arts. This is
 an unofficial fan project with no connection to them.
 
+## Linux (bash)
+
+The same commands work over ssh on a Linux box (tested on a Raspberry Pi and a UGREEN NAS,
+both bash 5): a random plant when you log in, `plants`, `plants <name>`, `plants garden [N]`,
+`plants list` and `plants reset`.
+
+1. On the Windows side, after building the banners: `python make_linux.py`. This writes
+   `linux/build/` with `plants.sh`, the art, an index of sizes and `install.sh`.
+2. Copy `linux/build/` to the Linux box and run `bash install.sh` there.
+
+The installer copies everything to `~/.config/pvz-banner/` and adds a block to `~/.bashrc`
+(backing it up first). The plant is drawn once per session, only in an interactive shell on a
+real terminal, so `ssh box command`, scp, rsync and cron never see it. It also works on systems
+whose ssh starts a plain interactive shell rather than a login shell. The tab's colours are put
+back when the session ends. `bash test.sh` checks the output fits at several window sizes.
+
+Needs bash 4+, `tput`, `shuf` and `paste` (coreutils).
+
 ## Notes
 
 - Tab tinting uses the OSC 10/11/12 escape codes; `plants reset` uses OSC 110/111/112, which

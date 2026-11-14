@@ -1,7 +1,9 @@
 """Builds the big banners in out/:
 
     out/big-<plant>.ans   one large shaded plant each (56 x 48 pixels, 24 lines tall)
-    out/garden-<n>.ans    the original row at double size, first n plants
+
+Plants that also exist on the reference sheet are replaced by the sheet's version when
+build_all.sh runs; only the purple mushroom stays from here.
 
 Run:  python make_big.py           (add --png for out/preview.png, needs Pillow)
 
@@ -12,7 +14,7 @@ import math
 import os
 import sys
 
-from make_banner import PALETTE, ROW as SMALL_ROW, fg, bg, ESC
+from make_banner import fg, bg, ESC
 
 W, H = 56, 48
 INK = (18, 22, 18)
@@ -399,22 +401,6 @@ def render(grid, captions):
     return "\n".join(lines) + "\n"
 
 
-def garden(count, scale=2, gap=4):
-    size = 16 * scale
-    grid = [[None] * (count * size + (count - 1) * gap) for _ in range(size)]
-    captions = []
-    for index, (name, rows, key) in enumerate(SMALL_ROW[:count]):
-        left = index * (size + gap)
-        captions.append((name, PALETTE[key], left, size))
-        for y, line in enumerate(rows):
-            for x, ch in enumerate(line):
-                if ch != ".":
-                    for dy in range(scale):
-                        for dx in range(scale):
-                            grid[y * scale + dy][left + x * scale + dx] = PALETTE[ch]
-    return grid, captions
-
-
 def save(path, text):
     with open(path, "w", encoding="utf-8", newline="\n") as f:
         f.write(text)
@@ -428,9 +414,6 @@ def main():
         c = draw()
         canvases.append(c)
         save(os.path.join(out, f"big-{slug}.ans"), render(c.px, [(name, color, 0, c.w)]))
-    for count in range(1, len(SMALL_ROW) + 1):
-        grid, captions = garden(count)
-        save(os.path.join(out, f"garden-{count}.ans"), render(grid, captions))
     if "--png" in sys.argv:
         from PIL import Image
         scale = 6
@@ -444,7 +427,7 @@ def main():
                         img.paste(color, ((ox + x) * scale, (oy + y) * scale,
                                           (ox + x + 1) * scale, (oy + y + 1) * scale))
         img.save(os.path.join(out, "preview.png"))
-    print(f"wrote {len(BIG)} big plants ({W + 2 * MARGIN} columns) and {len(SMALL_ROW)} garden rows to {out}")
+    print(f"wrote {len(BIG)} drawn plants to {out}")
 
 
 if __name__ == "__main__":

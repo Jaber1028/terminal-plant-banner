@@ -1,0 +1,132 @@
+# shellcheck shell=bash
+# Garden plant banner for bash. Source this from ~/.bashrc (see linux/install.sh).
+#
+#   plants              one random plant, as big as the window allows
+#   plants <name>       that plant
+#   plants garden       random plants side by side at their real pixels, until the row is full
+#   plants garden 8     eight plants: fewer than fit stay full size, more are shrunk together
+#                       to fit, or as many as the smallest size allows
+#   plants list         the names
+#   plants reset        put the terminal's own colours back
+#
+# PLANTS_THEME=0 stops the tab being tinted to match the plant.
+# PLANTS_COLS / PLANTS_ROWS pretend the window is that big (for testing).
+
+PLANTS_DIR="${PLANTS_DIR:-$HOME/.config/pvz-banner}"
+PLANTS_THEME="${PLANTS_THEME:-1}"
+
+# width and height of every banner, keyed "kind-name"
+declare -gA _PLANTS_W=() _PLANTS_H=()
+
+_plants_load_index() {
+    (( ${#_PLANTS_W[@]} )) && return
+    local kind name w h
+    while IFS=$'\t' read -r kind name w h; do
+        [[ -n $name ]] || continue
+        _PLANTS_W[$kind-$name]=$w
+        _PLANTS_H[$kind-$name]=$h
+    done < "$PLANTS_DIR/index.tsv"
+}
+
+_plants_names() {
+    local key
+    for key in "${!_PLANTS_W[@]}"; do [[ $key == big-* ]] && printf '%s\n' "${key#big-}"; done | sort
+}
+
+_plants_show() {   # print one banner file, with its tab tint first
+    local base=$1
+    if [[ $PLANTS_THEME == 1 && -r $PLANTS_DIR/art/$base.theme ]]; then
+        cat "$PLANTS_DIR/art/$base.theme"
+    fi
+    printf '\n'
+    cat "$PLANTS_DIR/art/$base.ans"
+    printf '\n'
+}
+
+# Fill a row from the shuffled names: each plant that still fits goes in, one that doesn't is
+# skipped for a narrower one later, and it stops when the names run out, the row is full, or
+# `want` plants are in. Leaves the chosen "kind-name" keys in _PLANTS_ROW.
+_plants_pack() {
+    local kind=$1 want=$2 width=$3 room=$4 used=-2 name key
+    _PLANTS_ROW=()
+    for name in "${_PLANTS_SHUFFLED[@]}"; do
+        (( ${#_PLANTS_ROW[@]} >= want || width - used - 2 < 8 )) && break
+        key=$kind-$name
+        [[ -n ${_PLANTS_W[$key]} ]] || continue
+        (( _PLANTS_H[$key] > room || used + 2 + _PLANTS_W[$key] > width )) && continue
+        _PLANTS_ROW+=("$key")
+        (( used += 2 + _PLANTS_W[$key] ))
+    done
+}
+
+_plants_garden() {
+    local count=$1 width=$2 room=$3 kind best=() tall=0 key i
+    mapfile -t _PLANTS_SHUFFLED < <(_plants_names | shuf)
+    _plants_pack big 9999 "$width" "$room"                     # real pixels, as many as fit
+    if (( count > 0 && count < ${#_PLANTS_ROW[@]} )); then
+        _plants_pack big "$count" "$width" "$room"            # asked for fewer: just that many
+    elif (( count > ${#_PLANTS_ROW[@]} )); then
+        best=("${_PLANTS_ROW[@]}")                               # asked for more: shrink together
+        for kind in s75 s60 s50 s40; do
+            _plants_pack "$kind" "$count" "$width" "$room"
+            (( ${#_PLANTS_ROW[@]} > ${#best[@]} )) && best=("${_PLANTS_ROW[@]}")
+            (( ${#_PLANTS_ROW[@]} >= count )) && break
+        done
+        _PLANTS_ROW=("${best[@]}")
+    fi
+    if (( ${#_PLANTS_ROW[@]} == 0 )); then                      # not even one fits at real size
+        for kind in s75 s60 s50 s40; do
+            _plants_pack "$kind" 9999 "$width" "$room"
+            (( ${#_PLANTS_ROW[@]} )) && break
+        done
+    fi
+    (( ${#_PLANTS_ROW[@]} )) || _PLANTS_ROW=("s40-${_PLANTS_SHUFFLED[0]}")
+
+    for key in "${_PLANTS_ROW[@]}"; do (( _PLANTS_H[$key] > tall )) && tall=${_PLANTS_H[$key]}; done
+    # each plant becomes a column of exactly `tall` rows, sitting on the shared baseline;
+    # paste puts them side by side, the extra space on all but the last makes a two-space gap
+    local tmp cols=() last=$(( ${#_PLANTS_ROW[@]} - 1 )) pad gap r line
+    tmp=$(mktemp -d) || return 1
+    for i in "${!_PLANTS_ROW[@]}"; do
+        key=${_PLANTS_ROW[$i]}
+        printf -v pad '%*s' "${_PLANTS_W[$key]}" ''
+        gap=''; (( i < last )) && gap=' '
+        {
+            for (( r = _PLANTS_H[$key]; r < tall; r++ )); do printf '%s%s\n' "$pad" "$gap"; done
+            while IFS= read -r line; do printf '%s%s\n' "$line" "$gap"; done < "$PLANTS_DIR/art/$key.ans"
+        } > "$tmp/$i"
+        cols+=("$tmp/$i")
+    done
+    printf '\n'
+    paste -d ' ' "${cols[@]}"
+    printf '\n'
+    rm -rf "$tmp"
+}
+
+plants() {
+    local which=${1:-random} count=${2:-0} cols rows width room kind key
+    if ! [[ $count =~ ^[0-9]+$ ]]; then count=0; fi
+    [[ -r $PLANTS_DIR/index.tsv ]] || { echo "plants: nothing installed in $PLANTS_DIR" >&2; return 1; }
+    _plants_load_index
+    cols=${PLANTS_COLS:-$(tput cols 2>/dev/null || echo 80)}
+    rows=${PLANTS_ROWS:-$(tput lines 2>/dev/null || echo 24)}
+    # Sizes are in character cells, so a bigger font is the same as a smaller window. The last
+    # column is never used: writing into it makes the terminal wrap and splits every row.
+    width=$(( cols - 1 )) room=$(( rows - 2 ))
+    case $which in
+        list)   _plants_names | paste -sd ' ' | sed 's/ /, /g'; return ;;
+        reset)  printf '\033]110\033\\\033]111\033\\\033]112\033\\'; return ;;
+        garden) _plants_garden "$count" "$width" "$room"; return ;;
+        random) which=$(_plants_names | shuf -n 1) ;;
+    esac
+    if [[ -z ${_PLANTS_W[big-$which]} ]]; then
+        echo "plants: nothing called '$which'. Try random, garden, or a name from 'plants list'." >&2
+        return 1
+    fi
+    for kind in x3 x2 big s75 s60 s50 s40; do      # one plant: as big as the window allows
+        key=$kind-$which
+        [[ -n ${_PLANTS_W[$key]} ]] || continue
+        if (( _PLANTS_W[$key] <= width && _PLANTS_H[$key] <= room )); then _plants_show "$key"; return; fi
+    done
+    _plants_show "s40-$which"
+}

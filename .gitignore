@@ -3,8 +3,6 @@ refs/
 out/*
 # The plants drawn by make_big.py are original and are included ready-made.
 !out/big-mushroom.*
-!out/garden-*.ans
-!out/garden-*.theme
 
 __pycache__/
 preview.png
@@ -12,3 +10,6 @@ check-*.png
 sheet.png
 !out/s[0-9][0-9]-mushroom.*
 !out/x?-mushroom.*
+banner.ans
+linux/build/
+linux/pvz-linux.tar.gz
