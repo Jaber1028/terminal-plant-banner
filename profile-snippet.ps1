@@ -1,6 +1,6 @@
 # Garden plant banner on terminal start. Art lives in ~\.config\pvz-banner (make_big.py rebuilds it).
 #   plants               one big plant, picked at random
-#   plants garden        the whole row at double size (shows as many plants as the window fits)
+#   plants garden        random plants at full size across the window; "plants garden 8" asks for eight
 #   plants classic       the small original row
 #   plants peashooter    or any other plant; "plants list" shows the names
 # $PlantsOnStart sets what a new terminal shows: random, garden, classic, a plant name, or off.
@@ -8,7 +8,8 @@ $PlantsOnStart = 'random'
 # $PlantsTheme: recolour the tab to match the plant shown. "plants reset" restores the normal colours.
 $PlantsTheme = $true
 function plants {
-    param([string]$Which = 'random', [int]$Columns = 0, [int]$Rows = 0)   # -Columns/-Rows: pretend the window is this big
+    # plants garden 8: ask for 8 plants (see the garden below). -Columns/-Rows: pretend the window is this big.
+    param([string]$Which = 'random', [int]$Count = 0, [int]$Columns = 0, [int]$Rows = 0)
     $dir = "$HOME\.config\pvz-banner"
     # Sizes are in character cells, so a bigger or smaller font (fewer or more cells) is handled the
     # same way as a smaller or bigger window. The last column is never used: writing into it makes
@@ -59,7 +60,22 @@ function plants {
                 }
                 , $row
             }
-            $picks = & $pack 'big'   # the plants' real pixels, never shrunk
+            $picks = & $pack 'big'   # the plants' real pixels, never shrunk: as many as fit
+            if ($Count -gt 0 -and $Count -lt $picks.Count) {
+                # asked for fewer than fit: just that many
+                $picks = & $pack 'big' $Count
+            }
+            elseif ($Count -gt $picks.Count) {
+                # asked for more than fit at real size: shrink them all together until that many fit;
+                # if even the smallest size can't hold that many, show as many as it can
+                $best = $picks
+                foreach ($kind in 's75', 's60', 's50', 's40') {
+                    $row = & $pack $kind $Count
+                    if ($row.Count -gt $best.Count) { $best = $row }
+                    if ($row.Count -ge $Count) { break }
+                }
+                $picks = $best
+            }
             if ($picks.Count -eq 0) {   # only when not even one fits at real size: the biggest shrink that holds one
                 foreach ($kind in 's75', 's60', 's50', 's40') {
                     $picks = & $pack $kind

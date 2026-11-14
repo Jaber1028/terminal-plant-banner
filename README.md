@@ -50,6 +50,7 @@ Bring your own pictures.
 | `plants <name>` | a specific plant |
 | `plants list` | the names available |
 | `plants garden` | random plants side by side at their real pixels, until the row is full |
+| `plants garden 8` | eight plants: fewer than fit stay full size; more are shrunk together to fit, or as many as the smallest size allows |
 | `plants classic` | the first, small version of the row |
 | `plants reset` | puts the tab's colours back to normal |
 
