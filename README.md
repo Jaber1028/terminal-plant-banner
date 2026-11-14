@@ -7,19 +7,13 @@ The art is drawn with truecolor half-block characters, so one character cell hol
 
 ## Gallery
 
-The five plants drawn from shapes by `make_big.py`, as they show in the terminal:
+All 31 plants in the rotation, as they show in the terminal (one is picked at random each time):
 
-![Peashooter, repeater, wall-nut, potato mine and mushroom](docs/drawn-plants.png)
+![All 31 plants in the rotation](docs/plants.png)
 
-`plants garden`, the small row at double size:
-
-![Sunflower, peashooter, snow pea, wall-nut and cherries in a row](docs/garden.png)
-
-`plants classic`, the first version:
-
-![The original small row of plants](docs/classic.png)
-
-The images are rendered straight from the banner files with `render_ans.py`.
+Most are converted from [TomcArts01's pixel art](https://www.newgrounds.com/art/view/tomcarts01/pvz-all-plants-pixel-art)
+(see Credits); the peashooter, repeater, wall-nut, potato mine and purple mushroom are drawn by
+`make_big.py`. The image is rendered straight from the banner files with `render_ans.py`.
 
 ## What's included
 
@@ -86,8 +80,8 @@ Useful options for `from_image.py`:
 
 ## Credits
 
-The pixel art used as reference for the personal set (converted with `from_image.py`, not
-included here) is by [TomcArts01](https://tomcarts01.newgrounds.com/):
+The pixel art the converted plants come from (made with `from_image.py`; shown in the gallery,
+but the source pictures and banner files are not included here) is by [TomcArts01](https://tomcarts01.newgrounds.com/):
 [PvZ All Plants Pixel Art](https://www.newgrounds.com/art/view/tomcarts01/pvz-all-plants-pixel-art)
 on Newgrounds. Go look at the original.
 
