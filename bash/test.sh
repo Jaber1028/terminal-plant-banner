@@ -4,10 +4,15 @@
 PLANTS_DIR=${1:-$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)}
 . "$PLANTS_DIR/plants.sh"
 # measuring needs a UTF-8 locale; take whichever one this system has
-if [[ ${LC_ALL:-${LC_CTYPE:-${LANG:-}}} != *[Uu][Tt][Ff]* ]]; then
-    utf=$(locale -a 2>/dev/null | grep -i -m1 -E '\.utf-?8$') && export LC_ALL=$utf
+# (tested directly: one block character must measure as 1; musl systems have no `locale -a`)
+utf_ok() { local s=$'▀'; (( ${#s} == 1 )); }
+if ! utf_ok; then
+    for l in C.UTF-8 C.utf8 en_US.UTF-8 en_US.utf8 $(locale -a 2>/dev/null | grep -i -E '\.utf-?8$'); do
+        export LC_ALL=$l
+        utf_ok && break
+    done
 fi
-if [[ ${LC_ALL:-${LC_CTYPE:-${LANG:-}}} != *[Uu][Tt][Ff]* ]]; then
+if ! utf_ok; then
     echo "test.sh: no UTF-8 locale found, so widths can't be measured; nothing tested" >&2
     exit 1
 fi
