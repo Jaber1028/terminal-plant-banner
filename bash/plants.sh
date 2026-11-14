@@ -3,9 +3,9 @@
 #
 #   plants              one random plant, as big as the window allows
 #   plants <name>       that plant
-#   plants garden       random plants side by side at their real pixels, until the row is full
-#   plants garden 8     eight plants: fewer than fit stay full size, more are shrunk together
-#                       to fit, or as many as the smallest size allows
+#   plants garden       random plants filling the row: real size when at least three fit,
+#                       otherwise all shrunk together until three do
+#   plants garden 8     eight plants, at the biggest size where eight fit (or as many as fit)
 #   plants list         the names
 #   plants reset        put the terminal's own colours back
 #
