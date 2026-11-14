@@ -7,53 +7,78 @@
 $PlantsOnStart = 'random'
 # $PlantsTheme: recolour the tab to match the plant shown. "plants reset" restores the normal colours.
 $PlantsTheme = $true
+# $PlantsGarden: 'quality' keeps the garden's plants big (three to five, as many as fit);
+# 'quantity' always shows five, shrinking them to fit.
+$PlantsGarden = 'quality'
 function plants {
     param([string]$Which = 'random', [int]$Columns = 0, [int]$Rows = 0)   # -Columns/-Rows: pretend the window is this big
     $dir = "$HOME\.config\pvz-banner"
-    $width = if ($Columns) { $Columns } else { $Host.UI.RawUI.WindowSize.Width }
+    # Sizes are in character cells, so a bigger or smaller font (fewer or more cells) is handled the
+    # same way as a smaller or bigger window. The last column is never used: writing into it makes
+    # the terminal wrap, which splits every row of the art in two.
+    $width = $(if ($Columns) { $Columns } else { $Host.UI.RawUI.WindowSize.Width }) - 1
     $height = if ($Rows) { $Rows } else { $Host.UI.RawUI.WindowSize.Height }
-    # One plant on its own is drawn as big as the window allows (3x, 2x, normal, then smaller copies);
-    # the garden stops at normal size, so a single plant is always the bigger one.
+    $visible = { param($s) ($s -replace "`e\[[0-9;]*m", '').Length }
+    # A banner file as lines with the empty cells at the end of each row cut off, plus its width.
+    $load = {
+        param($f)
+        $lines = @([IO.File]::ReadAllLines($f) | Where-Object { ($_ -replace "`e\[[0-9;]*m", '').Trim() } |
+                   ForEach-Object { ($_ -replace "(`e\[0m )+(`e\[0m)?$", '') + "`e[0m" })
+        @{ Lines = $lines; Width = ($lines | ForEach-Object { & $visible $_ } | Measure-Object -Maximum).Maximum }
+    }
+    $sizes = 'x3', 'x2', 'big', 'small60', 'small50', 'small40', 'small30', 'small20'
+    # One plant on its own is drawn as big as the window allows; the garden stops at normal size,
+    # so a single plant is always the bigger one.
     $sized = {
         param($name)
-        foreach ($kind in 'x3', 'x2', 'big', 'small60', 'small50', 'small40', 'small30', 'small20') {
+        foreach ($kind in $sizes) {
             $f = "$dir\out\$kind-$name.ans"
             if (-not (Test-Path $f)) { continue }
-            $lines = [IO.File]::ReadAllLines($f)
-            $w = ($lines | ForEach-Object { ($_ -replace "`e\[[0-9;]*m", '').TrimEnd().Length } | Measure-Object -Maximum).Maximum
-            if ($w -le $width -and $lines.Count -le $height - 2) { return $f }
+            $art = & $load $f
+            if ($art.Width -le $width -and $art.Lines.Count -le $height - 2) { return $f }
         }
         "$dir\out\small20-$name.ans"
     }
     if ($Which -eq 'random') { $Which = (Get-ChildItem "$dir\out\big-*.ans" | Get-Random).BaseName -replace '^big-' }
     $file = switch ($Which) {
-        'garden'  {   # 5 random plants side by side on one baseline, at the biggest size where all five fit
+        'garden'  {   # random plants side by side on one baseline: five at the biggest size that fits,
+                      # or fewer when even the smallest five are too wide for the window
             $room = $height - 2
-            $names = (Get-ChildItem "$dir\out\big-*.ans" | Get-Random -Count 5).BaseName -replace '^big-'
-            $load = {
-                param($f)
-                $lines = @([IO.File]::ReadAllLines($f) | Where-Object { ($_ -replace "`e\[[0-9;]*m", '').Trim() })
-                $w = ($lines | ForEach-Object { ($_ -replace "`e\[[0-9;]*m", '').Length } | Measure-Object -Maximum).Maximum
-                @{ Lines = $lines; Width = $w }
+            $names = @((Get-ChildItem "$dir\out\big-*.ans" | Get-Random -Count 5).BaseName -replace '^big-')
+            $kinds = 'big', 'small60', 'small50', 'small40', 'small30', 'small20'
+            # $PlantsGarden 'quality': the biggest size at which at least three fit (up to five);
+            # 'quantity': always five, shrinking them as far as needed. Either way, fewer only as a last resort.
+            $tries = if ($PlantsGarden -eq 'quantity') {
+                foreach ($count in 5, 4, 3, 2, 1) { foreach ($kind in $kinds) { , @($kind, $count) } }
+            } else {
+                foreach ($kind in $kinds) { foreach ($count in 5, 4, 3) { , @($kind, $count) } }
+                foreach ($count in 2, 1) { foreach ($kind in $kinds) { , @($kind, $count) } }
             }
-            # biggest first: normal is the real pixels; the small sizes are shrunk copies
-            foreach ($kind in 'big', 'small60', 'small50', 'small40', 'small30', 'small20') {
-                $picks = @(foreach ($n in $names) { & $load "$dir\out\$kind-$n.ans" })
-                $used = ($picks | ForEach-Object { $_.Width } | Measure-Object -Sum).Sum + $picks.Count - 1
-                $tall = ($picks | ForEach-Object { $_.Lines.Count } | Measure-Object -Maximum).Maximum
-                if ($used -le $width -and $tall -le $room) { break }
+            $picks = $null
+            foreach ($t in $tries) {
+                $kind, $count = $t
+                $try = @(foreach ($n in $names[0..($count - 1)]) { & $load "$dir\out\$kind-$n.ans" })
+                $used = ($try | ForEach-Object { $_.Width } | Measure-Object -Sum).Sum + 2 * ($try.Count - 1)
+                $tall = ($try | ForEach-Object { $_.Lines.Count } | Measure-Object -Maximum).Maximum
+                if ($used -le $width -and $tall -le $room) { $picks = $try; break }
             }
+            if (-not $picks) { $picks = @(& $load "$dir\out\small20-$($names[0]).ans") }
             $tall = ($picks | ForEach-Object { $_.Lines.Count } | Measure-Object -Maximum).Maximum
             $out = for ($r = 0; $r -lt $tall; $r++) {
-                ($picks | ForEach-Object {
-                    $i = $r - ($tall - $_.Lines.Count)
-                    $text = if ($i -ge 0) { $_.Lines[$i] } else { '' }
-                    $text + "`e[0m" + (' ' * ($_.Width - ($text -replace "`e\[[0-9;]*m", '').Length))
-                }) -join ' '
+                $row = for ($p = 0; $p -lt $picks.Count; $p++) {
+                    $art = $picks[$p]
+                    $i = $r - ($tall - $art.Lines.Count)
+                    $text = if ($i -ge 0) { $art.Lines[$i] } else { '' }
+                    # pad every plant but the last to its full width, so the next one starts in line
+                    if ($p -lt $picks.Count - 1) { $text + (' ' * ($art.Width - (& $visible $text))) } else { $text }
+                }
+                $row -join '  '
             }
             Write-Host ("`n" + ($out -join "`n") + "`n"); return
         }
-        'classic' { "$dir\saved\small-row\banner.ans" }
+        'classic' {   # the first, fixed-size row; a garden instead when the window is too narrow for it
+            if ($width -ge 96) { "$dir\saved\small-row\banner.ans" } else { plants garden -Columns ($width + 1) -Rows $height; return }
+        }
         'reset'   { Write-Host "`e]110`e\`e]111`e\`e]112`e\" -NoNewline; return }   # back to the terminal's own colours
         'list'    { Write-Host ((Get-ChildItem "$dir\out\big-*.ans").BaseName -replace '^big-' -join ', '); return }
         default   { if (Test-Path "$dir\out\big-$Which.ans") { & $sized $Which } }
@@ -62,7 +87,7 @@ function plants {
         # recolour this tab (background, text, cursor) to suit the plant, when it has a theme
         $theme = [IO.Path]::ChangeExtension($file, '.theme')
         if ($PlantsTheme -and (Test-Path $theme)) { Write-Host ([IO.File]::ReadAllText($theme)) -NoNewline }
-        Write-Host ([IO.File]::ReadAllText($file)) -NoNewline
+        Write-Host ("`n" + ((& $load $file).Lines -join "`n") + "`n")
     }
     else { Write-Host "plants: nothing called '$Which'. Try random, garden, classic, or a name from 'plants list'." }
 }
