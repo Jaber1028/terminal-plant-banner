@@ -18,7 +18,26 @@ function plants {
             if (-not $fits) { $fits = Get-ChildItem "$dir\out\big-*.ans" }
             ($fits | Get-Random).FullName
         }
-        'garden'  { foreach ($n in 5, 4, 3, 2, 1) { if ($width -ge 36 * $n) { "$dir\out\garden-$n.ans"; break } } }
+        'garden'  {   # random current plants side by side, as many as fit the window, sharing one baseline
+            $room = $Host.UI.RawUI.WindowSize.Height - 2
+            $picks = @(); $used = 0
+            foreach ($f in (Get-ChildItem "$dir\out\big-*.ans" | Get-Random -Count 99)) {
+                $lines = [IO.File]::ReadAllLines($f.FullName) | Where-Object { ($_ -replace "`e\[[0-9;]*m", '').Trim() }
+                if ($lines.Count -gt $room) { continue }
+                $w = ($lines | ForEach-Object { ($_ -replace "`e\[[0-9;]*m", '').Length } | Measure-Object -Maximum).Maximum
+                if ($used + $w + 1 -gt $width) { continue }
+                $picks += , @{ Lines = @($lines); Width = $w }; $used += $w + 1
+            }
+            $tall = ($picks | ForEach-Object { $_.Lines.Count } | Measure-Object -Maximum).Maximum
+            $out = for ($r = 0; $r -lt $tall; $r++) {
+                ($picks | ForEach-Object {
+                    $i = $r - ($tall - $_.Lines.Count)
+                    $text = if ($i -ge 0) { $_.Lines[$i] } else { '' }
+                    $text + "`e[0m" + (' ' * ($_.Width - ($text -replace "`e\[[0-9;]*m", '').Length))
+                }) -join ' '
+            }
+            Write-Host ("`n" + ($out -join "`n") + "`n"); return
+        }
         'classic' { "$dir\saved\small-row\banner.ans" }
         'reset'   { Write-Host "`e]110`e\`e]111`e\`e]112`e\" -NoNewline; return }   # back to the terminal's own colours
         'list'    { Write-Host ((Get-ChildItem "$dir\out\big-*.ans").BaseName -replace '^big-' -join ', '); return }
