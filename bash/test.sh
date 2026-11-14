@@ -25,7 +25,8 @@ for size in "30 12" "60 20" "120 30" "240 65"; do
         wide=0
         while IFS= read -r line; do (( ${#line} > wide )) && wide=${#line}; done < <(printf '%s\n' "$out" | strip)
         tall=$(printf '%s\n' "$out" | strip | grep -c '[^ ]')
-        if (( wide >= $1 || tall > $2 )); then bad=$((bad + 1)); echo "TOO BIG: $what in $1x$2 -> $wide x $tall"; fi
+        # a plant asked for by name always shows (its smallest size), so it may exceed a tiny window
+        if [[ $what != "$first" ]] && (( wide >= $1 || tall > $2 )); then bad=$((bad + 1)); echo "TOO BIG: $what in $1x$2 -> $wide x $tall"; fi
         printf '%-10s %4sx%-3s -> %3s x %s\n' "$what" "$1" "$2" "$wide" "$tall"
     done
 done

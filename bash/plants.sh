@@ -97,11 +97,7 @@ _plants_garden() {
             (( ${#_PLANTS_ROW[@]} )) && break
         done
     fi
-    if (( ${#_PLANTS_ROW[@]} == 0 )); then                      # nothing fits: the smallest there is
-        for kind in s40 s50 s60 s75 big; do
-            [[ -n ${_PLANTS_W[$kind-${_PLANTS_SHUFFLED[0]}]} ]] && { _PLANTS_ROW=("$kind-${_PLANTS_SHUFFLED[0]}"); break; }
-        done
-    fi
+    (( ${#_PLANTS_ROW[@]} )) || return 0                         # window too small for any plant
 
     for key in "${_PLANTS_ROW[@]}"; do (( _PLANTS_H[$key] > tall )) && tall=${_PLANTS_H[$key]}; done
     # each plant becomes a column of exactly `tall` rows, sitting on the shared baseline;

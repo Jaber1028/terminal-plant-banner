@@ -94,7 +94,7 @@ function plants {
                     if ($picks.Count -ge 1) { break }
                 }
             }
-            if ($picks.Count -eq 0) { $picks = @(& $load (& $sized $all[0])) }
+            if ($picks.Count -eq 0) { return }   # window too small for any plant
             $tall = ($picks | ForEach-Object { $_.Lines.Count } | Measure-Object -Maximum).Maximum
             $out = for ($r = 0; $r -lt $tall; $r++) {
                 $row = for ($p = 0; $p -lt $picks.Count; $p++) {
