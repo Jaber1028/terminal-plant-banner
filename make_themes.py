@@ -58,7 +58,9 @@ for path in sorted(glob.glob(os.path.join(here, "out", "*.ans"))):
     theme = osc(11, back) + osc(10, text_c) + osc(12, cursor) + osc(17, sel_bg) + osc(19, sel_fg)
     extra = (iterm("selbg", sel_bg) + iterm("selfg", sel_fg) + iterm("curbg", cursor)
              + iterm("curfg", back) + iterm("tab", cursor))
-    for suffix, codes in ((".theme", theme), (".iterm", extra)):
+    # .colors: the same five colours as plain hex, for iTerm2's Python API script (iterm2/)
+    plain = " ".join("%02x%02x%02x" % c for c in (back, text_c, cursor, sel_bg, sel_fg))
+    for suffix, codes in ((".theme", theme), (".iterm", extra), (".colors", plain)):
         with open(path[:-4] + suffix, "w", encoding="utf-8", newline="") as f:
             f.write(codes)
 print("themes written for", len(glob.glob(os.path.join(here, "out", "*.theme"))), "banners")

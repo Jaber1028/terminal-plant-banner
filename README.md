@@ -173,8 +173,12 @@ an unofficial fan project with no connection to them.
   12, 17 and 19 escape codes, and `plants reset` undoes them (OSC 110, 111, 112, 117, 119).
   Terminals that don't support a code ignore it; the art still draws.
 - In iTerm2 the selection, the text under the cursor and the tab colour are also set with iTerm2's
-  own `SetColors` code. iTerm2 has no code for the cursor guide's colour, so that stays as your
-  profile has it, and it documents a reset only for the tab colour: the others last until the
-  session closes.
+  own `SetColors` code. Escape codes can't set the cursor guide's colour or put the selection
+  back afterwards, so there is an optional companion script, `iterm2/pvz_banner.py`, that does
+  both through iTerm2's Python API. `install.sh` copies it to iTerm2's `Scripts/AutoLaunch`
+  folder; turn on Settings > General > Magic > Enable Python API, run Scripts > Manage > Install
+  Python Runtime, and restart iTerm2. It only acts on local sessions, not over ssh.
+- Ghostty supports the background, text and cursor colours and their resets. It ignores the
+  selection codes, so the selection keeps the colours from your Ghostty config.
 - On start-up the banner is skipped for scripts, redirected output and windows narrower than
   60 columns.
