@@ -86,12 +86,14 @@ Settings:
 The tint uses the standard colour escape codes. A terminal that doesn't know a code ignores it,
 and the art still draws.
 
-| Terminal | Background, text, cursor | Selection | Notes |
-|---|---|---|---|
-| Windows Terminal | yes | yes | |
-| iTerm2 | yes | yes | also tints the tab; see below for the cursor guide |
-| Ghostty | yes | no | the selection keeps the colours from your Ghostty config |
-| macOS Terminal.app | untested | untested | needs a line-spacing change, see below |
+Tested in Windows Terminal, iTerm2, Ghostty and macOS Terminal.app.
+
+| Terminal | Notes |
+|---|---|
+| Windows Terminal | tints background, text, cursor and selection |
+| iTerm2 | also tints the tab; see below for the cursor guide |
+| Ghostty | tints background, text and cursor; the selection keeps the colours from your Ghostty config |
+| macOS Terminal.app | needs a line-spacing change, see below |
 
 **iTerm2 cursor guide.** Escape codes can't set the cursor guide's colour or restore the
 selection afterwards. The optional script `iterm2/pvz_banner.py` does both through iTerm2's Python

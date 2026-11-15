@@ -128,8 +128,18 @@ plants() {
     if ! [[ $count =~ ^[0-9]+$ ]]; then count=0; fi
     [[ -r $PLANTS_DIR/index.tsv ]] || { echo "plants: nothing installed in $PLANTS_DIR" >&2; return 1; }
     _plants_load_index
-    cols=${PLANTS_COLS:-$(tput cols 2>/dev/null || echo 80)}
-    rows=${PLANTS_ROWS:-$(tput lines 2>/dev/null || echo 24)}
+    # The window's real size. Asked of the terminal itself (stty on /dev/tty) first: inside $( )
+    # some systems' tput (macOS's) can't see the terminal and answers a stock 80x24, which makes
+    # everything come out small in a big window.
+    local size
+    size=$(stty size 2>/dev/null </dev/tty) || size=""
+    if [[ $size =~ ^([0-9]+)\ ([0-9]+)$ ]] && (( BASH_REMATCH[1] > 0 && BASH_REMATCH[2] > 0 )); then
+        rows=${BASH_REMATCH[1]} cols=${BASH_REMATCH[2]}
+    else
+        cols=$(tput cols 2>/dev/null) || cols=${COLUMNS:-80}
+        rows=$(tput lines 2>/dev/null) || rows=${LINES:-24}
+    fi
+    cols=${PLANTS_COLS:-$cols} rows=${PLANTS_ROWS:-$rows}
     # Sizes are in character cells, so a bigger font is the same as a smaller window. The last
     # column is never used: writing into it makes the terminal wrap and splits every row.
     width=$(( cols - 1 )) room=$(( rows - 2 ))
