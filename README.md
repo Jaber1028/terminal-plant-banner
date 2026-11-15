@@ -2,46 +2,22 @@
 
 ![A tangle kelp in pixel art, drawn in a terminal tinted to match it](docs/hero.png)
 
-Shows a big, coloured pixel-art plant when a terminal opens, and tints the terminal (background,
-text, cursor) to match it. There is a PowerShell version and a bash/zsh version, so it runs on
-Windows, Linux and macOS, locally or over ssh.
+Shows a big pixel-art plant when a terminal opens, and tints the terminal to match it. There is
+a bash/zsh version and a PowerShell version, so it runs on Linux, macOS and Windows, locally or
+over ssh.
 
-The art is drawn with truecolor half-block characters, so one character cell holds two pixels.
-It needs a terminal with 24-bit colour and a monospace font that has the block characters (most
-modern terminals do).
-
-## Gallery
-
-A set of 50 plants, as they show in the terminal (one is picked at random each time):
+The art is drawn with truecolor half-block characters (two pixels per character cell), so it
+needs a terminal with 24-bit colour, which most modern terminals have.
 
 ![50 pixel-art plants](docs/plants.png)
 
-All 50 come with the repository (`out/big-*.ans`). They were converted with `from_image.py` from
-[TomcArts01's pixel art](https://www.newgrounds.com/art/view/tomcarts01/pvz-all-plants-pixel-art)
-(see Credits), except the purple mushroom, which `make_big.py` draws. You can add your own from
-any pixel art.
+All 50 plants come with the repository. One is picked at random each time.
 
-## What's included
+## Install
 
-| File | What it does |
-|---|---|
-| `install.sh` | one-step install of the bash version on Linux, macOS or any Unix-like system |
-| `build.py` | builds every size, theme and the bash bundle into `out/` and `bash/build/` |
-| `profile-snippet.ps1` | the PowerShell version |
-| `bash/` | the bash version (`plants.sh`), its installer and its test |
-| `from_image.py` | turns a pixel-art picture into a banner |
-| `split_sheet.py` | cuts a sprite sheet into one picture per sprite, numbered for naming |
-| `make_big.py`, `make_banner.py` | the plants drawn in code, and the classic row |
-| `make_small.py`, `make_scaled.py` | the smaller copies and the 2x/3x copies |
-| `make_themes.py`, `make_bash.py` | a colour theme per banner; the bash bundle |
-| `render_ans.py`, `sheet.py` | draw banners as PNG images, and put check images side by side |
-| `ps-test.ps1`, `bash/test.sh` | check every view fits a range of window sizes |
+Both versions need Python 3 once, to build the banners. Nothing else is required.
 
-Both versions need Python 3 once, to build the banners; nothing else. Pillow is only needed to
-convert your own pictures (`from_image.py`, `split_sheet.py`); if it is installed, the build also
-uses it for slightly smoother small sizes.
-
-## Install: bash or zsh on Linux, macOS or any Unix-like system
+### bash or zsh (Linux, macOS, any Unix-like system)
 
 ```bash
 git clone <this repository's URL> pvz-banner
@@ -49,136 +25,138 @@ cd pvz-banner
 bash install.sh
 ```
 
-`install.sh` runs `build.py` (every size, a colour theme per banner, and the bash bundle in
-`bash/build/`), then installs it for you. The art goes to `~/.local/share/pvz-banner/`, and one
-marked block goes into each shell file that needs it:
+This builds the banners and installs them for your user:
 
-- `~/.bashrc`, and `~/.bash_profile` too where login shells don't read `~/.bashrc`;
-- `~/.zshrc`, when zsh is your shell or you have a `~/.zshrc` (macOS's default). zsh gets the
-  same `plants` command, run through bash behind the scenes.
+- The art goes to `~/.local/share/pvz-banner/`.
+- One marked block goes into `~/.bashrc`, into `~/.bash_profile` where login shells don't read
+  `~/.bashrc`, and into `~/.zshrc` if you use zsh. Each file is backed up first as
+  `<file>.bak-pvz`.
 
-Running it again updates everything in place. To uninstall, delete each block (from
-`# pvz-banner start` to `# pvz-banner end`) and that folder; each file you had is backed up first
-as `<file>.bak-pvz`.
+Run it again to update. To uninstall, delete each block (from `# pvz-banner start` to
+`# pvz-banner end`) and the folder.
 
-A plant shows once per terminal session: in a new local terminal, or when you ssh in. It only
-draws in an interactive shell on a real terminal at least 60 columns wide, so `ssh host command`,
-scp, rsync and cron never see it, and shells started inside the session don't repeat it. The
-terminal's colours are put back when the session ends.
+Requirements: bash 4.2 or newer somewhere on the system (it doesn't have to be your login
+shell), `tput` and `paste`. GNU, BSD and BusyBox tools all work.
 
-Needs bash 4.2 or newer somewhere on the system (it doesn't have to be your login shell), plus
-`tput` and `paste`. The installer looks on your PATH and in the usual Homebrew and MacPorts
-places. `shuf` is used when there; without it a random sort in `awk` does the same job. Works with
-GNU, BSD and BusyBox tools.
+**macOS:** the built-in bash is 3.2, so run `brew install bash` first. Your login shell can stay
+zsh.
 
-**macOS:** the built-in bash is 3.2, so run `brew install bash` first; your login shell (zsh) can
-stay as it is. If you want Pillow (for converting pictures), install it into the same `python3`
-the build uses: `python3 -m pip install --user --break-system-packages pillow`. `brew install
-pillow` can land in a different Homebrew Python than the `python3` on your PATH, and then the
-build doesn't see it; `python3 -c "import PIL"` tells you whether it can.
+**No Python on the target machine?** Run `python3 build.py` on another one, copy `bash/build/`
+over, and run the `install.sh` inside it.
 
-**macOS Terminal.app shows thin horizontal lines through the art:** it draws the half-block
-characters with the font, and with the default spacing they don't fill the whole line. iTerm2,
-Ghostty, Windows Terminal and most others draw these blocks themselves and show no gaps. In
-Terminal.app, open Terminal > Settings > Profiles, pick your profile, open the Text tab, and lower
-the line spacing until the lines close up; with Menlo, a line spacing of about 0.805 and a
-character spacing of 1 is a known good setting. Other fonts may need a different value.
+### PowerShell 7+ (any OS)
 
-To install on a machine without Python, build on another one, copy `bash/build/` over and run its
-`install.sh`. `bash test.sh` in the installed folder checks every view fits several window sizes.
+```powershell
+git clone <this repository's URL> "$HOME/.config/pvz-banner"
+cd "$HOME/.config/pvz-banner"
+python build.py        # or python3 build.py
+Get-Content profile-snippet.ps1 | Add-Content $PROFILE
+```
 
-## Install: PowerShell 7+ on any OS
-
-1. Clone this repository to `~/.config/pvz-banner` (the snippet expects that path) and build:
-
-   ```powershell
-   git clone <this repository's URL> "$HOME/.config/pvz-banner"
-   cd "$HOME/.config/pvz-banner"
-   python build.py        # or python3 build.py
-   ```
-
-2. Append `profile-snippet.ps1` to your PowerShell profile:
-
-   ```powershell
-   Get-Content "$HOME/.config/pvz-banner/profile-snippet.ps1" | Add-Content $PROFILE
-   ```
-
-3. Open a new terminal. `pwsh -NoProfile -File ps-test.ps1` checks every view fits several
-   window sizes.
-
-After adding plants of your own (below), run `build.py` again (and `install.sh` for bash).
+The snippet expects that folder. Open a new terminal to see a plant.
 
 ## Commands
 
-The same in both versions:
-
 | Command | Shows |
 |---|---|
-| `plants` | one plant at random, as big as the window allows (3x, 2x, normal or smaller) |
+| `plants` | one random plant, as big as the window allows |
 | `plants <name>` | a specific plant |
 | `plants list` | the names available |
-| `plants garden` | random plants side by side, filling the row: at real size when at least three fit, otherwise all shrunk together until three do |
-| `plants garden 8` | eight plants, at the biggest size where eight fit, or as many as the smallest size allows |
+| `plants garden` | random plants side by side, filling the row |
+| `plants garden 8` | eight plants, shrunk together as far as needed to fit |
 | `plants reset` | puts the terminal's colours back to normal |
-| `plants classic` | (PowerShell) the first, small version of the row |
+| `plants classic` | PowerShell only: the first, small row of plants |
 
-Sizes are counted in character cells, so a bigger font works the same as a smaller window.
+A plant shows once per terminal session, in a new local terminal or when you ssh in. It only
+draws in an interactive shell on a real terminal at least 60 columns wide, so `ssh host command`,
+scp, rsync, cron and scripts never see it. The terminal's colours go back when the session ends.
 
-Settings: in PowerShell, `$PlantsOnStart` sets what a new terminal shows (`random`, `garden`,
-`classic`, a plant name, or `off`) and `$PlantsTheme` turns the tinting on or off. In bash,
-`PLANTS_THEME=0` turns the tinting off.
+Sizes are counted in character cells, so a bigger font behaves like a smaller window. The garden
+uses the plants' real size when at least three fit, and otherwise shrinks them all by the same
+amount until three do.
 
-## Adding a plant from a picture
+Settings:
 
-Needs Python 3 and Pillow (`pip install pillow`). Pixel art on a plain background works best.
+- bash/zsh: `PLANTS_THEME=0` turns the tinting off.
+- PowerShell: `$PlantsTheme` turns the tinting on or off, and `$PlantsOnStart` sets what a new
+  terminal shows (`random`, `garden`, `classic`, a plant name, or `off`).
+
+## Terminal support
+
+The tint uses the standard colour escape codes. A terminal that doesn't know a code ignores it,
+and the art still draws.
+
+| Terminal | Background, text, cursor | Selection | Notes |
+|---|---|---|---|
+| Windows Terminal | yes | yes | |
+| iTerm2 | yes | yes | also tints the tab; see below for the cursor guide |
+| Ghostty | yes | no | the selection keeps the colours from your Ghostty config |
+| macOS Terminal.app | untested | untested | needs a line-spacing change, see below |
+
+**iTerm2 cursor guide.** Escape codes can't set the cursor guide's colour or restore the
+selection afterwards. The optional script `iterm2/pvz_banner.py` does both through iTerm2's Python
+API. `install.sh` copies it into iTerm2's `Scripts/AutoLaunch` folder. To switch it on, enable
+Settings > General > Magic > Enable Python API, run Scripts > Manage > Install Python Runtime,
+and restart iTerm2. It acts on local sessions only, not over ssh.
+
+**Terminal.app shows thin lines through the art.** It draws the block characters with the font,
+and at the default spacing they don't fill the line. Open Terminal > Settings > Profiles, pick
+your profile, open the Text tab, and lower the line spacing until the lines close up. With Menlo,
+about 0.805 works.
+
+## Adding your own plants
+
+This needs Pillow as well as Python 3. Pixel art on a plain background works best.
 
 ```
 python3 from_image.py <picture> <name>
 python3 build.py
 ```
 
-Useful options for `from_image.py`:
+Then run `bash install.sh` again for the bash/zsh version.
+
+Options for `from_image.py`:
 
 | Option | Use |
 |---|---|
 | `--pitch N` | size of one art pixel in the picture, if the automatic guess is off |
-| `--snap` | follow the picture's real pixel edges; fixes blur when art pixels are 3 or 4 picture pixels apart |
-| `--main` | keep only the biggest sprite (drops neighbours at the picture's edge) |
+| `--snap` | follow the picture's real pixel edges; fixes blur in screenshots |
+| `--main` | keep only the biggest sprite |
 | `--drop R,G,B` | remove a colour, such as a ground shadow |
-| `--merge N` | fold colours closer than N together (default 26); removes screenshot speckle |
+| `--merge N` | fold colours closer than N together (default 26); removes speckle |
 | `--crop l,t,r,b` | use only part of the picture |
-| `--reach 1` | average a 3x3 patch per pixel |
-| `--halo` | add a one-pixel slate ring outside the outline |
-| `--lift-dark 62` | turn the black outer outline itself to slate |
 | `--png` | also write `check-<name>.png` to inspect the result |
 
-For a whole sprite sheet: `python3 split_sheet.py <sheet>` cuts it into `refs/sheet/NN.png` and
-writes `refs/sheet/index.png` with each sprite's number on it; convert each piece with
-`from_image.py`. A sheet of screenshotted pixel art usually needs `--snap --main --merge 36` and
-a `--pitch` matching its pixel size. The files go in `out/` as `big-<name>.ans`; `build.py` makes
-the rest.
+For a sprite sheet, `python3 split_sheet.py <sheet>` cuts it into `refs/sheet/NN.png` and writes
+an `index.png` with each sprite's number on it. Convert each piece with `from_image.py`; a sheet
+of screenshotted pixel art usually needs `--snap --main --merge 36` and a matching `--pitch`.
+
+**Pillow on macOS:** install it into the same `python3` you run the scripts with:
+`python3 -m pip install --user --break-system-packages pillow`. `brew install pillow` can land in
+a different Python. `python3 -c "import PIL"` tells you whether yours can see it.
+
+## Files
+
+| File | What it does |
+|---|---|
+| `install.sh` | builds and installs the bash/zsh version |
+| `build.py` | builds every size, the colour themes and the bash bundle |
+| `out/big-*.ans` | the 50 plants; everything else in `out/` is built from them |
+| `bash/` | the bash/zsh version: `plants.sh`, its installer and `test.sh` |
+| `profile-snippet.ps1` | the PowerShell version |
+| `iterm2/pvz_banner.py` | optional iTerm2 companion script |
+| `from_image.py`, `split_sheet.py` | convert a picture, or cut up a sprite sheet |
+| `make_big.py`, `make_banner.py` | the mushroom drawn in code, and the classic row |
+| `make_small.py`, `make_scaled.py` | the smaller copies, and the 2x and 3x copies |
+| `make_themes.py`, `make_bash.py` | a colour theme per banner, and the bash bundle |
+| `render_ans.py` | draws banners as a PNG image |
+| `ps-test.ps1`, `bash/test.sh` | check every view fits a range of window sizes |
 
 ## Credits
 
-The pixel art the plants were converted from (with `from_image.py`) is by [TomcArts01](https://tomcarts01.newgrounds.com/):
+The plants were converted from pixel art by [TomcArts01](https://tomcarts01.newgrounds.com/):
 [PvZ All Plants Pixel Art](https://www.newgrounds.com/art/view/tomcarts01/pvz-all-plants-pixel-art)
 on Newgrounds. Go look at the original.
 
-The plants are characters from *Plants vs. Zombies* by PopCap Games / Electronic Arts. This is
-an unofficial fan project with no connection to them.
-
-## Notes
-
-- Tinting sets the background, text, cursor and selection colours with the standard OSC 10, 11,
-  12, 17 and 19 escape codes, and `plants reset` undoes them (OSC 110, 111, 112, 117, 119).
-  Terminals that don't support a code ignore it; the art still draws.
-- In iTerm2 the selection, the text under the cursor and the tab colour are also set with iTerm2's
-  own `SetColors` code. Escape codes can't set the cursor guide's colour or put the selection
-  back afterwards, so there is an optional companion script, `iterm2/pvz_banner.py`, that does
-  both through iTerm2's Python API. `install.sh` copies it to iTerm2's `Scripts/AutoLaunch`
-  folder; turn on Settings > General > Magic > Enable Python API, run Scripts > Manage > Install
-  Python Runtime, and restart iTerm2. It only acts on local sessions, not over ssh.
-- Ghostty supports the background, text and cursor colours and their resets. It ignores the
-  selection codes, so the selection keeps the colours from your Ghostty config.
-- On start-up the banner is skipped for scripts, redirected output and windows narrower than
-  60 columns.
+The plants are characters from *Plants vs. Zombies* by PopCap Games / Electronic Arts. This is an
+unofficial fan project with no connection to them.
