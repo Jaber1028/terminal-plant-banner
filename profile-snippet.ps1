@@ -7,6 +7,9 @@
 $PlantsOnStart = 'random'
 # $PlantsTheme: recolour the tab to match the plant shown. "plants reset" restores the normal colours.
 $PlantsTheme = $true
+# $PlantsZombies: how often, in percent, a zombie turns up instead of the random plant, or at the
+# right-hand end of the garden. 0 keeps them out.
+$PlantsZombies = 10
 function plants {
     # plants garden 8: ask for 8 plants (see the garden below). -Columns/-Rows: pretend the window is this big.
     param([string]$Which = 'random', [int]$Count = 0, [int]$Columns = 0, [int]$Rows = 0)
@@ -45,8 +48,14 @@ function plants {
         if ($f) { return $f }
         foreach ($kind in 's40', 's50', 's60', 's75', 'big') { if (Test-Path "$dir/out/$kind-$name.ans") { return "$dir/out/$kind-$name.ans" } }
     }
-    if ($Which -eq 'random') {   # a random plant among those that fit this window; none fit, nothing shown
-        foreach ($n in ((Get-ChildItem "$dir/out/big-*.ans" | Get-Random -Count 999).BaseName -replace '^big-')) {
+    # Zombies are the banners named "zombie" or "zombie-<something>"; everything else is a plant.
+    $names = @((Get-ChildItem "$dir/out/big-*.ans").BaseName -replace '^big-')
+    $plantNames = @($names | Where-Object { $_ -notmatch '^zombie(-|$)' } | Get-Random -Count 999)
+    $zombieNames = @($names | Where-Object { $_ -match '^zombie(-|$)' } | Get-Random -Count 999)
+    $zombieRoll = (Get-Random -Maximum 100) -lt $PlantsZombies
+    if ($Which -eq 'random') {   # a random plant (now and then a zombie) that fits this window; none fit, nothing shown
+        $order = if ($zombieRoll) { $zombieNames + $plantNames } else { $plantNames + $zombieNames }
+        foreach ($n in $order) {
             $f = & $fits $n
             if ($f) { $Which = $n; $picked = $f; break }   # keep the size found: no second search
         }
@@ -56,19 +65,22 @@ function plants {
         'garden'  {   # random plants side by side on one baseline, until the window is full. Every plant
                       # in a garden is drawn at the same scale, so they keep their real sizes relative to each other.
             $room = $height - 2
-            $all = @((Get-ChildItem "$dir/out/big-*.ans" | Get-Random -Count 999).BaseName -replace '^big-')
+            $all = $plantNames
+            # Now and then a zombie walks in. It always stands at the right-hand end: nothing is
+            # ever planted to the right of a zombie.
+            $zombie = if ($zombieRoll -and $zombieNames) { $zombieNames[0] }
             # Fill the row left to right from the shuffled list: every plant that still fits goes in,
             # one that doesn't is skipped (a narrower one later may fit), and it stops when the list
             # runs out or the space left is too small for any plant.
             $pack = {
-                param($kind, $want = 999)
+                param($kind, $want = 999, $limit = $width)
                 $row = @(); $used = -2
                 foreach ($n in $all) {
-                    if ($row.Count -ge $want -or $width - $used - 2 -lt 8) { break }
+                    if ($row.Count -ge $want -or $limit - $used - 2 -lt 8) { break }
                     $f = "$dir/out/$kind-$n.ans"
                     if (-not (Test-Path $f)) { continue }
                     $art = & $load $f
-                    if ($art.Lines.Count -gt $room -or $used + 2 + $art.Width -gt $width) { continue }
+                    if ($art.Lines.Count -gt $room -or $used + 2 + $art.Width -gt $limit) { continue }
                     $row += , $art; $used += 2 + $art.Width
                 }
                 , $row
@@ -81,7 +93,16 @@ function plants {
             $enough = if ($Count -gt 0) { $Count } else { 3 }
             $picks = @()
             foreach ($kind in 'big', 's75', 's60', 's50', 's40') {
-                $row = & $pack $kind $want
+                $z = $null
+                if ($zombie -and (Test-Path "$dir/out/$kind-$zombie.ans")) {
+                    $z = & $load "$dir/out/$kind-$zombie.ans"
+                    if ($z.Lines.Count -gt $room -or $z.Width -gt $width) { $z = $null }
+                }
+                if ($z) {   # room kept for it at the right
+                    $row = & $pack $kind ($want - 1) ($width - $z.Width - 2)
+                    $row = @($row) + , $z
+                }
+                else { $row = & $pack $kind $want }
                 if ($row.Count -gt $picks.Count) { $picks = $row }
                 if ($row.Count -ge $enough) { break }
             }

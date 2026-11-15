@@ -49,6 +49,13 @@ _plants_names() {
     for key in "${!_PLANTS_W[@]}"; do [[ $key == big-* ]] && printf '%s\n' "${key#big-}"; done | sort
 }
 
+# Zombies are the banners named "zombie" or "zombie-<something>"; everything else is a plant.
+_plants_only() { _plants_names | grep -v -E '^zombie(-|$)'; }
+_plants_zombies() { _plants_names | grep -E '^zombie(-|$)'; }
+# A zombie turns up this often, in percent: instead of the random plant, or at the garden's edge.
+PLANTS_ZOMBIES="${PLANTS_ZOMBIES:-10}"
+_plants_zombie_roll() { (( RANDOM % 100 < PLANTS_ZOMBIES )); }
+
 _plants_iterm() {   # iTerm2, locally (TERM_PROGRAM) or over ssh (LC_TERMINAL, which ssh passes on)
     [[ ${TERM_PROGRAM:-} == iTerm.app || ${LC_TERMINAL:-} == iTerm2 ]]
 }
@@ -87,15 +94,25 @@ _plants_pack() {
 }
 
 _plants_garden() {
-    local count=$1 width=$2 room=$3 kind best=() tall=0 key i
-    mapfile -t _PLANTS_SHUFFLED < <(_plants_names | _plants_shuffle)
+    local count=$1 width=$2 room=$3 kind best=() tall=0 key i zombie="" zkey plant_width
+    mapfile -t _PLANTS_SHUFFLED < <(_plants_only | _plants_shuffle)
     (( ${#_PLANTS_SHUFFLED[@]} )) || { echo "plants: no plants installed" >&2; return 1; }
-    # Real pixels while enough plants fit (three, or the number asked for); otherwise every plant
-    # is shrunk by the same amount, a step at a time, until enough fit. Each try fills the row (or
-    # takes the number asked for). If no size holds enough, the try with the most plants wins.
+    # Now and then a zombie walks in. It always stands at the right-hand end: nothing is ever
+    # planted to the right of a zombie.
+    if _plants_zombie_roll; then zombie=$(_plants_zombies | _plants_shuffle -n 1); fi
+    # Real pixels while enough fit (three, or the number asked for); otherwise everything is shrunk
+    # by the same amount, a step at a time, until enough fit. Each try fills the row (or takes the
+    # number asked for). If no size holds enough, the try with the most wins.
     local want=$(( count > 0 ? count : 9999 )) enough=$(( count > 0 ? count : 3 ))
     for kind in big s75 s60 s50 s40; do
-        _plants_pack "$kind" "$want" "$width" "$room"
+        zkey="" plant_width=$width
+        if [[ -n $zombie && -n ${_PLANTS_W[$kind-$zombie]} ]] &&
+                (( _PLANTS_H[$kind-$zombie] <= room && _PLANTS_W[$kind-$zombie] <= width )); then
+            zkey=$kind-$zombie                                   # room kept for it at the right
+            plant_width=$(( width - _PLANTS_W[$zkey] - 2 ))
+        fi
+        if [[ -n $zkey ]]; then _plants_pack "$kind" "$(( want - 1 ))" "$plant_width" "$room"; _PLANTS_ROW+=("$zkey")
+        else _plants_pack "$kind" "$want" "$width" "$room"; fi
         (( ${#_PLANTS_ROW[@]} > ${#best[@]} )) && best=("${_PLANTS_ROW[@]}")
         (( ${#_PLANTS_ROW[@]} >= enough )) && break
     done
@@ -156,11 +173,13 @@ plants() {
             if [[ -n ${ITERM_SESSION_ID:-} ]]; then printf '\033]1337;Custom=id=pvz-banner:%s reset\a' "${ITERM_SESSION_ID#*:}"; fi
             return ;;
         garden) _plants_garden "$count" "$width" "$room"; return ;;
-        random)   # a random plant among those that fit this window at some size; none fit, nothing shown
-            local name
+        random)   # a random plant (now and then a zombie) among those that fit this window at
+                  # some size; none fit, nothing shown
+            local name first=_plants_only second=_plants_zombies
+            if _plants_zombie_roll; then first=_plants_zombies second=_plants_only; fi
             while IFS= read -r name; do
                 key=$(_plants_fit "$name" "$width" "$room") && { _plants_show "$key"; return; }
-            done < <(_plants_names | _plants_shuffle)
+            done < <($first | _plants_shuffle; $second | _plants_shuffle)
             return ;;
     esac
     if [[ -z ${_PLANTS_W[big-$which]} ]]; then

@@ -13,6 +13,12 @@ needs a terminal with 24-bit colour, which most modern terminals have.
 
 All 50 plants come with the repository. One is picked at random each time.
 
+About one time in ten, a zombie turns up instead:
+
+![13 pixel-art zombies](docs/zombies.png)
+
+In the garden, a zombie always stands at the right-hand end: nothing is planted to its right.
+
 ## Install
 
 Both versions need Python 3 once, to build the banners. Nothing else is required.
@@ -77,9 +83,13 @@ amount until three do.
 
 Settings:
 
-- bash/zsh: `PLANTS_THEME=0` turns the tinting off.
-- PowerShell: `$PlantsTheme` turns the tinting on or off, and `$PlantsOnStart` sets what a new
-  terminal shows (`random`, `garden`, `classic`, a plant name, or `off`).
+- bash/zsh: `PLANTS_THEME=0` turns the tinting off. `PLANTS_ZOMBIES=10` is how often a zombie
+  appears, in percent; 0 keeps them out.
+- PowerShell: `$PlantsTheme` turns the tinting on or off, `$PlantsZombies` is the zombie chance
+  in percent, and `$PlantsOnStart` sets what a new terminal shows (`random`, `garden`, `classic`,
+  a plant name, or `off`).
+
+Zombies are the banners named `zombie` or `zombie-<name>`; `plants zombie-flag` shows one directly.
 
 ## Terminal support
 
@@ -133,6 +143,10 @@ For a sprite sheet, `python3 split_sheet.py <sheet>` cuts it into `refs/sheet/NN
 an `index.png` with each sprite's number on it. Convert each piece with `from_image.py`; a sheet
 of screenshotted pixel art usually needs `--snap --main --merge 36` and a matching `--pitch`.
 
+For artwork that is not pixel art, `python3 from_art.py <picture> <name> [<name> ...]` removes the
+background, splits the picture into its separate figures (one name each, left to right), and
+shrinks each to pixel art. Name a banner `zombie-<something>` to make it a zombie.
+
 **Pillow on macOS:** install it into the same `python3` you run the scripts with:
 `python3 -m pip install --user --break-system-packages pillow`. `brew install pillow` can land in
 a different Python. `python3 -c "import PIL"` tells you whether yours can see it.
@@ -143,11 +157,12 @@ a different Python. `python3 -c "import PIL"` tells you whether yours can see it
 |---|---|
 | `install.sh` | builds and installs the bash/zsh version |
 | `build.py` | builds every size, the colour themes and the bash bundle |
-| `out/big-*.ans` | the 50 plants; everything else in `out/` is built from them |
+| `out/big-*.ans` | the 50 plants and 13 zombies; everything else in `out/` is built from them |
 | `bash/` | the bash/zsh version: `plants.sh`, its installer and `test.sh` |
 | `profile-snippet.ps1` | the PowerShell version |
 | `iterm2/pvz_banner.py` | optional iTerm2 companion script |
-| `from_image.py`, `split_sheet.py` | convert a picture, or cut up a sprite sheet |
+| `from_image.py`, `split_sheet.py` | convert a pixel-art picture, or cut up a sprite sheet |
+| `from_art.py` | turn ordinary artwork (not pixel art) into pixel-art banners |
 | `make_big.py`, `make_banner.py` | the mushroom drawn in code, and the classic row |
 | `make_small.py`, `make_scaled.py` | the smaller copies, and the 2x and 3x copies |
 | `make_themes.py`, `make_bash.py` | a colour theme per banner, and the bash bundle |
@@ -160,5 +175,7 @@ The plants were converted from pixel art by [TomcArts01](https://tomcarts01.newg
 [PvZ All Plants Pixel Art](https://www.newgrounds.com/art/view/tomcarts01/pvz-all-plants-pixel-art)
 on Newgrounds. Go look at the original.
 
-The plants are characters from *Plants vs. Zombies* by PopCap Games / Electronic Arts. This is an
+The zombies were converted with `from_art.py` from official *Plants vs. Zombies* artwork.
+
+The plants and zombies are characters from *Plants vs. Zombies* by PopCap Games / Electronic Arts. This is an
 unofficial fan project with no connection to them.
