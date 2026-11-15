@@ -50,7 +50,7 @@ def main():
     run("make_themes.py")
     run("make_bash.py")
     count = len(glob.glob(os.path.join(out, "big-*.ans")))
-    print(f"done: {count} plants")
+    print(f"done: {count} banners (plants and zombies)")
 
 
 if __name__ == "__main__":
