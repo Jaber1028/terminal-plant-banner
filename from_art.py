@@ -35,7 +35,16 @@ def main():
             plain.append(a)
     src, names = plain[0], plain[1:]
     height, colors = arg("--height", 68), arg("--colors", 32)
-    img = Image.open(src).convert("RGB")
+    raw = Image.open(src)
+    # A picture with real transparency says exactly where its background is: use that, and guess
+    # nothing from colours (a white bucket or a black hat would otherwise look like background).
+    clear = None
+    if "A" in raw.getbands() or "transparency" in raw.info:
+        alpha = raw.convert("RGBA").getchannel("A")
+        alpha = alpha.crop((6, 6, alpha.width - 6, alpha.height - 6))
+        if alpha.getextrema()[0] < 128:
+            clear = alpha.tobytes()
+    img = raw.convert("RGB")
     img = img.crop((6, 6, img.width - 6, img.height - 6))       # screenshot frames and edge specks
     w, h = img.size
     px = img.load()
@@ -62,10 +71,21 @@ def main():
         queue.extend(((x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)))
 
     # Background trapped inside a figure (between legs, under an arm): a sizeable patch of
-    # backdrop colour the flood couldn't reach. On a checkerboard it must hold both of the board's
-    # tones, so a plain pale shirt or eye is never mistaken for it.
-    tones = Counter((c[0] // 8, c[1] // 8, c[2] // 8) for c in edge if backdrop(c)).most_common(2)
-    checker = len(tones) == 2 and tones[1][1] > 0.15 * len(edge)
+    # backdrop colour the flood couldn't reach. It counts as background only when nearly all of it
+    # is in the very colours the real background is made of (both tones of a checkerboard, say), so
+    # a pale shirt or the white of an eye, which are other colours, is never mistaken for it.
+    # Those colours are read from the background the flood found, not from the picture's edge: a
+    # screenshot can have a dark frame there that says nothing about it.
+    found_back = Counter()
+    for i in range(0, w * h, 7):
+        if back[i]:
+            c = px[i % w, i // w]
+            found_back[(c[0] // 2, c[1] // 2, c[2] // 2)] += 1
+    total = sum(found_back.values()) or 1
+    real = set()
+    for (r, g, b), n in found_back.items():
+        if n > 0.004 * total:
+            real.update((r + dr, g + dg, b + db) for dr in (-1, 0, 1) for dg in (-1, 0, 1) for db in (-1, 0, 1))
     seen = bytearray(w * h)
     for sy in range(h):
         for sx in range(w):
@@ -73,12 +93,12 @@ def main():
             if back[i] or seen[i] or not backdrop(px[sx, sy]):
                 continue
             seen[i] = 1
-            todo, patch, found, near_ground = deque([(sx, sy)]), [], Counter(), 0
+            todo, patch, matching, near_ground = deque([(sx, sy)]), [], 0, 0
             while todo:
                 x, y = todo.popleft()
                 patch.append(y * w + x)
                 c = px[x, y]
-                found[(c[0] // 8, c[1] // 8, c[2] // 8)] += 1
+                matching += (c[0] // 2, c[1] // 2, c[2] // 2) in real
                 near_ground += abs(c[0] - ground[0]) + abs(c[1] - ground[1]) + abs(c[2] - ground[2]) < 18
                 for nx, ny in ((x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)):
                     if 0 <= nx < w and 0 <= ny < h and not back[ny * w + nx] and not seen[ny * w + nx] and backdrop(px[nx, ny]):
@@ -86,13 +106,14 @@ def main():
                         todo.append((nx, ny))
             if len(patch) < 0.0002 * w * h:
                 continue
-            if checker:
-                trapped = all(found[t] > 0.03 * len(patch) for t, _ in tones)
-            else:
-                trapped = near_ground > 0.5 * len(patch)
-            if trapped:
+            # (a plain but grainy background varies too much to match colour for colour: there,
+            # being mostly close to the background colour is enough)
+            if matching > 0.8 * len(patch) or near_ground > 0.5 * len(patch):
                 for i in patch:
                     back[i] = 1
+
+    if clear is not None:
+        back = bytearray(1 if a < 128 else 0 for a in clear)
 
     # figures: islands of what is left, found on a coarse grid so near-touching parts stay together
     cell = 4
@@ -137,6 +158,37 @@ def main():
         # shave the pale fringe the background leaves around the outline
         alpha = cut.getchannel("A").filter(ImageFilter.MinFilter(3))
         cut.putalpha(alpha)
+        # loose bits near the figure but not touching it (a handwritten note, a stray stroke) go:
+        # only pieces at least 3% the size of the biggest piece stay
+        cw, ch = cut.size
+        ap = alpha.load()
+        piece = [0] * (cw * ch)
+        sizes = [0]
+        for sy in range(ch):
+            for sx in range(cw):
+                if not ap[sx, sy] or piece[sy * cw + sx]:
+                    continue
+                sizes.append(0)
+                k = len(sizes) - 1
+                piece[sy * cw + sx] = k
+                todo = deque([(sx, sy)])
+                while todo:
+                    x, y = todo.popleft()
+                    sizes[k] += 1
+                    for ny in range(max(0, y - 1), min(ch, y + 2)):
+                        for nx in range(max(0, x - 1), min(cw, x + 2)):
+                            if ap[nx, ny] and not piece[ny * cw + nx]:
+                                piece[ny * cw + nx] = k
+                                todo.append((nx, ny))
+        keep = max(sizes) * 0.03
+        for y in range(ch):
+            for x in range(cw):
+                if ap[x, y] and sizes[piece[y * cw + x]] < keep:
+                    ap[x, y] = 0
+        cut.putalpha(alpha)
+        box = alpha.getbbox()
+        if box:
+            cut = cut.crop(box)
         if "--flip" in sys.argv:
             cut = cut.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
         nh = height
